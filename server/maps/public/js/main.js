@@ -3,18 +3,25 @@ $(document).ready(function(){
 
 	if ($('#map').length > 0) {
 
-		$.get('/api/easycab', function(data){
+		var mapOptions = {
+          center: { 
+          	lat: 46.971378,
+          	lng: 7.440972
+          },
+          zoom: 12
+        };
+
+        var map = new google.maps.Map($('#map').get(0), mapOptions);
+
+		$.get('/api/easycab#'+(new Date().getTime()), function(data){
 
 			if (data[0] && data[0].loc) {
 			
 			if(!Array.isArray(data)) return console.error('/api/easycab did not return array as expected.');
 
-			var mapOptions = {
-	          center: data[0].loc,
-	          zoom: 13
+				map.setCenter(data[0].loc);
+				map.setZoom(13);
 	        };
-
-	        var map = new google.maps.Map($('#map').get(0), mapOptions);
 
 			data.forEach(function(taxi){
 				var marker = new google.maps.Marker({
@@ -23,12 +30,12 @@ $(document).ready(function(){
 					title: taxi.name,
 				});
 				google.maps.event.addListener(marker, 'click', function(){
-					$.get('/partials/taxi-info/' + taxi.id, function(data){
+					$.get('/partials/taxi-info#' + (new Date().getTime()), function(data) {
 						$('#taxiInfo').html(data);
+						$('#taxiInfo').fadeIn('slow');
 					});
 				});
 			});
-			}
 		});
 	}
 });

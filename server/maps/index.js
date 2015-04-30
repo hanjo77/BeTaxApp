@@ -45,7 +45,6 @@ client.on('message', function (topic, message) {
     app.locals.taxis = taxis;
   }
   // app.render('home');
-  console.log(taxis[0]);                                                                                                                     
 });
 
 app.get('/', function(req, res){                                                                                  
@@ -60,9 +59,8 @@ app.get('/api/easycab', function(req, res){
     res.json(taxis);                                                                                                                  
 });                                                                                                                      
                                                                                                                     
-app.get('/partials/taxi-info/:id', function(req, res){  
-  console.log(taxis);                                                                 
-    res.render('partials/taxi-info', { taxi: taxis.byId[req.params.id], layout: null });                             
+app.get('/partials/taxi-info', function(req, res){  
+    res.render('partials/taxi-info', { taxi: taxis[0], layout: null });                             
 });                                                                                                                    
                                                                                                                          
 app.use(function(req, res){                                                                                              
