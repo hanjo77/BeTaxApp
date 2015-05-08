@@ -1,0 +1,21 @@
+http://blog.retep.org/2012/06/18/getting-gps-to-work-on-a-raspberry-pi/
+
+apt-get install usbutils
+
+apt-get install gpsd gpsd-clients python-gps
+
+dmesg | grep -i usb
+
+[    4.083185] usb 1-1.4: new full-speed USB device number 6 using dwc_otg
+[    4.205750] usb 1-1.4: New USB device found, idVendor=1546, idProduct=01a6
+[    4.215342] usb 1-1.4: New USB device strings: Mfr=1, Product=2, SerialNumber=0
+[    4.224523] usb 1-1.4: Product: u-blox 6  -  GPS Receiver
+[    4.233490] usb 1-1.4: Manufacturer: u-blox AG - www.u-blox.com
+
+http://www.danmandle.com/blog/getting-gpsd-to-work-with-python/
+
+gpsd /dev/ttyACM0 -F /var/run/gpsd.sock
+
+
+killall gpsd
+gpsd /dev/ttyUSB0 -F /var/run/gpsd.sock
