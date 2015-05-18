@@ -19,3 +19,16 @@ gpsd /dev/ttyACM0 -F /var/run/gpsd.sock
 
 killall gpsd
 gpsd /dev/ttyUSB0 -F /var/run/gpsd.sock
+
+dpkg-reconfigure gpsd
+
+
+http://www.gavinj.net/2012/05/python-virtualenv-is-your-friend.html
+http://www.gavinj.net/2012/06/building-python-daemon-process.html
+
+pip install python-daemon
+
+cat /var/log/testdaemon/testdaemon.log
+
+update-rc.d testdaemon defaults
+update-rc.d -f testdaemon remove

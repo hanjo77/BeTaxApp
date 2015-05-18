@@ -28,7 +28,7 @@ def on_connect(client, userdata, flags, rc):
 def cb_coordinates(data):
     driver_id = os.getenv('DRIVER_ID', '')
     if driver_id != '':
-        coordinates = '{"car":"' + socket.gethostname() + '", "driver":"' + driver_id + '","gps":{"latitude":' + str(data.lat) + ',"longitude":' + str(data.lon) + '}}'
+        coordinates = '{"time":"' + data.time + '", "car":"' + socket.gethostname() + '", "driver":"' + driver_id + '","gps":{"latitude":' + str(data.lat) + ',"longitude":' + str(data.lon) + '}}'
         # print(coordinates)
         client.publish("presence", coordinates, qos=0, retain=False)
 
@@ -82,8 +82,9 @@ if __name__ == "__main__":
             # To see all report data, uncomment the line below
             # print report
             if report['class'] == 'TPV':
-                # os.system('clear') #clear the terminal (optional)
-                cb_coordinates(report)
+                if hasattr(report, 'lat'):
+                    # os.system('clear') #clear the terminal (optional)
+                    cb_coordinates(report)
         except KeyError:
             pass
         except KeyboardInterrupt:

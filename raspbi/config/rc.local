@@ -11,5 +11,7 @@
 #
 # By default this script does nothing.
 
+/usr/sbin/gpsd /dev/ttyACM0 -F /var/run/gpsd.sock
+sh '/root/startup-python.sh'
 
 exit 0
