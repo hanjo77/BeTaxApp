@@ -28,6 +28,7 @@ case "$1" in
     echo "Starting server"
     # Start the daemon
     mkdir /var/run/sensor-daemon
+    /root/restart-gpsd.sh
     python /usr/local/python/sensor-daemon.py start
     ;;
   stop)
@@ -38,7 +39,9 @@ case "$1" in
     ;;
   restart)
     echo "Restarting server"
-    python /usr/local/python/sensor-daemon.py restart
+    python /usr/local/python/sensor-daemon.py stop
+    /root/restart-gpsd.sh
+    python /usr/local/python/sensor-daemon.py start
     ;;
   *)
     # Refuse to do other stuff

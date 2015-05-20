@@ -7,6 +7,7 @@ import os
 import socket
 import paho.mqtt.client as mqtt
 import gps
+import urllib2
 from tinkerforge.ip_connection import IPConnection
 from tinkerforge.bricklet_nfc_rfid import NFCRFID
 from daemon import runner
@@ -16,6 +17,7 @@ HOST = "localhost"
 PORT = 4223
 UID_NFC = "oDB"
 UID_GPS = "qGf"
+GPS_TIMEOUT = 10;
 tag_type = 0
 
 
@@ -58,13 +60,29 @@ class EasyCabSensorListener():
         self.pidfile_timeout = 5
         self.client = []
         self.session = []
+        self.update_time = time.time();
 
     def start_gps(self):
         self.session = gps.gps("localhost", "2947")
         self.session.stream(gps.WATCH_ENABLE | gps.WATCH_NEWSTYLE)
 
+
+    def internet_on(self):
+        try:
+            response = urllib2.urlopen('http://hanjo.synology.me',timeout=1)
+            return True
+
+        except urllib2.URLError as err:
+            pass
+
+        return False
+
     def run(self):
-        # Load MQTT client      
+        #wait until we can connect
+        while not self.internet_on():
+            time.sleep(5);
+            
+        # Load MQTT client 
         self.client = mqtt.Client()
         self.client.on_connect = self.on_connect
         self.client.connect("hanjo.synology.me", 1883);
@@ -85,22 +103,26 @@ class EasyCabSensorListener():
             # Main code goes here ...
             try:
                 report = self.session.next()
-                # Wait for a 'TPV' report and display the current time
-                # To see all report data, uncomment the line below
-                # print report
-                if hasattr(report, 'lat'):
-                    self.cb_coordinates(report)
-                # else:
-                    # call(["/root/restart-gpsd.sh"])
-                    # self.start_gps()
+                valid = False;
+                while report:
+                    if hasattr(report, 'lat'):
+                        self.cb_coordinates(report)
+                        valid = True
+                        self.update_time = time.time();
+                    #if (time.time() - self.update_time) < GPS_TIMEOUT:
+                    #    call(["/root/restart-gpsd.sh"])
+                    #    self.start_gps()
+                    #    print "Restart GPSD"
+                    report = self.session.next()
+
             except KeyError:
                 pass
+
             except KeyboardInterrupt:
                 quit()
+
             except StopIteration:
-                # call(["gpsd", "/dev/ttyUSB0", "-F", "/var/run/gpsd.sock"])
-                print "Restart GPSD"
-            time.sleep(5)
+                print "GPSD Stopped " + str(self.update_time)
 
 easyCabSensorListener = EasyCabSensorListener()
 daemon_runner = runner.DaemonRunner(easyCabSensorListener)
