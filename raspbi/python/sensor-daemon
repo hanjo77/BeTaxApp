@@ -1,0 +1,50 @@
+#! /bin/bash
+# Copyright (c) 1996-2012 My Company.
+# All rights reserved.
+#
+# Author: Bob Bobson, 2012
+#
+# Please send feedback to bob@bob.com
+#
+# /etc/init.d/sensor-daemon
+#
+### BEGIN INIT INFO
+# Provides: sensor-daemon
+# Required-Start: 
+# Should-Start: 
+# Required-Stop: 
+# Should-Stop:
+# Default-Start:  2 3 4 5
+# Default-Stop:   0 1 6
+# Short-Description: Test daemon process
+# Description:    Runs up the test daemon process
+### END INIT INFO
+
+# Activate the python virtual environment
+#    . /root/sensor-daemon/bin/activate
+
+case "$1" in
+  start)
+    echo "Starting server"
+    # Start the daemon
+    mkdir /var/run/sensor-daemon
+    python /usr/local/python/sensor-daemon.py start
+    ;;
+  stop)
+    echo "Stopping server"
+    # Stop the daemon
+    python /usr/local/python/sensor-daemon.py stop
+    rm -r /var/run/sensor-daemon
+    ;;
+  restart)
+    echo "Restarting server"
+    python /usr/local/python/sensor-daemon.py restart
+    ;;
+  *)
+    # Refuse to do other stuff
+    echo "Usage: /etc/init.d/sensor-daemon {start|stop|restart}"
+    exit 1
+    ;;
+esac
+
+exit 0
