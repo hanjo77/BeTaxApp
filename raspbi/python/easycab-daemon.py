@@ -14,6 +14,7 @@ from daemon import runner
 from subprocess import call
 
 HOST = "localhost"
+SERVER_HOSTNAME = "hanjo.synology.me"
 PORT = 4223
 UID_NFC = "oDB"
 UID_GPS = "qGf"
@@ -21,7 +22,7 @@ GPS_TIMEOUT = 10;
 tag_type = 0
 
 
-class EasyCabSensorListener():
+class EasyCabListener():
 
     # Callback function on MQTT connection
     def on_connect(self, client, userdata, flags, rc):
@@ -51,12 +52,15 @@ class EasyCabSensorListener():
             id = ('-'.join(map(str, ret.tid[:ret.tid_length])))
             os.environ["DRIVER_ID"] = id
             print(id + " got connected")
-        
+            if (time.time() - self.update_time) > GPS_TIMEOUT:
+                call(["service", "easycabd", "restart"])
+                print "Restart GPSD"
+     
     def __init__(self):
         self.stdin_path = '/dev/null'
-        self.stdout_path = '/var/log/sensor-daemon/sensor-daemon.log'
-        self.stderr_path = '/var/log/sensor-daemon/sensor-daemon-error.log'
-        self.pidfile_path =  '/var/run/sensor-daemon/sensor-daemon.pid'
+        self.stdout_path = '/var/log/easycabd/easycabd.log'
+        self.stderr_path = '/var/log/easycabd/easycabd-error.log'
+        self.pidfile_path =  '/var/run/easycabd/easycabd.pid'
         self.pidfile_timeout = 5
         self.client = []
         self.session = []
@@ -69,7 +73,7 @@ class EasyCabSensorListener():
 
     def internet_on(self):
         try:
-            response = urllib2.urlopen('http://hanjo.synology.me',timeout=1)
+            response = urllib2.urlopen('http://' + SERVER_HOSTNAME,timeout=1)
             return True
 
         except urllib2.URLError as err:
@@ -78,14 +82,14 @@ class EasyCabSensorListener():
         return False
 
     def run(self):
-        #wait until we can connect
+        #wait until we can connect - network may not be ready yet...
         while not self.internet_on():
             time.sleep(5);
             
         # Load MQTT client 
         self.client = mqtt.Client()
         self.client.on_connect = self.on_connect
-        self.client.connect("hanjo.synology.me", 1883);
+        self.client.connect(SERVER_HOSTNAME, 1883);
  
         self.start_gps()
 
@@ -94,7 +98,7 @@ class EasyCabSensorListener():
         ipcon.connect(HOST, PORT) # Connect to brickd
         # Don't use device before ipcon is connected
 
-        # Register state changed callback to function cb_state_changed
+        # Register state changed callback for NFC sensor to function cb_state_changed
         nfc = NFCRFID(UID_NFC, ipcon)
         nfc.register_callback(nfc.CALLBACK_STATE_CHANGED, lambda x, y: self.cb_state_changed(x, y, nfc))
         nfc.request_tag_id(nfc.TAG_TYPE_MIFARE_CLASSIC)
@@ -104,16 +108,16 @@ class EasyCabSensorListener():
             try:
                 report = self.session.next()
                 valid = False;
-                while report:
+                if report:
                     if hasattr(report, 'lat'):
                         self.cb_coordinates(report)
                         valid = True
                         self.update_time = time.time();
-                    #if (time.time() - self.update_time) < GPS_TIMEOUT:
-                    #    call(["/root/restart-gpsd.sh"])
-                    #    self.start_gps()
-                    #    print "Restart GPSD"
-                    report = self.session.next()
+
+                # GPS does not want to talk with us - restart that dirty bastard...
+                if (time.time() - self.update_time) > GPS_TIMEOUT:
+                    call(["service", "easycabd", "restart"])
+                    print "Restart GPSD"
 
             except KeyError:
                 pass
@@ -124,6 +128,6 @@ class EasyCabSensorListener():
             except StopIteration:
                 print "GPSD Stopped " + str(self.update_time)
 
-easyCabSensorListener = EasyCabSensorListener()
-daemon_runner = runner.DaemonRunner(easyCabSensorListener)
+easyCabListener = EasyCabListener()
+daemon_runner = runner.DaemonRunner(easyCabListener)
 daemon_runner.do_action()

@@ -39,3 +39,5 @@ cat /var/log/sensor-daemon/sensor-daemon.log
 
 update-rc.d sensor-daemon defaults
 update-rc.d -f sensor-daemon remove
+
+http://www.linuxsystems.it/2012/06/debian-wheezy-raspberry-pi-minimal-image/

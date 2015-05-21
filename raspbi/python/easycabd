@@ -1,0 +1,48 @@
+#! /bin/bash
+# Copyright (c) 1996-2012 My Company.
+# All rights reserved.
+#
+# Author: Stephan Menzi & Hansjuerg Jaggi
+#
+# /etc/init.d/easycabd
+#
+### BEGIN INIT INFO
+# Provides: easycabd
+# Required-Start: 
+# Should-Start: 
+# Required-Stop: 
+# Should-Stop:
+# Default-Start:  2 3 4 5
+# Default-Stop:   0 1 6
+# Short-Description: easyCab Daemon
+# Description:    Does all the sensor and network magic for the easyCab Raspberry Pi
+### END INIT INFO
+
+case "$1" in
+  start)
+    echo "Starting server"
+    # Start the daemon
+    mkdir /var/run/easycabd
+    /root/restart-gpsd.sh
+    python /usr/local/python/easycab-daemon.py start
+    ;;
+  stop)
+    echo "Stopping server"
+    # Stop the daemon
+    python /usr/local/python/easycab-daemon.py stop
+    rm -r /var/run/easycabd
+    ;;
+  restart)
+    echo "Restarting server"
+    python /usr/local/python/easycab-daemon.py stop
+    /root/restart-gpsd.sh
+    python /usr/local/python/easycab-daemon.py start
+    ;;
+  *)
+    # Refuse to do other stuff
+    echo "Usage: /etc/init.d/easycabd {start|stop|restart}"
+    exit 1
+    ;;
+esac
+
+exit 0

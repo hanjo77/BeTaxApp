@@ -1,6 +1,6 @@
 #!/bin/sh
 
-if pgrep "check-network.sh"
+if pgrep "easycabd"
 then
 	killall check-network.sh
 	rm /var/run/gpsd.sock
