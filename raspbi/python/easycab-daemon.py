@@ -106,12 +106,13 @@ class EasyCabListener():
 
         # Wait until we can connect - network may not be ready yet...
         while not self.internet_on():
-            time.sleep(5);
+            call(["/root/check-network.sh"])
+            time.sleep(5)
             
         # Load MQTT client 
         self.client = mqtt.Client()
         self.client.on_connect = self.on_connect
-        self.client.connect(SERVER_HOSTNAME, 1883);
+        self.client.connect(SERVER_HOSTNAME, 1883)
  
         # Start GPS listener
         self.start_gps()
@@ -136,7 +137,9 @@ class EasyCabListener():
                     if hasattr(report, 'lat'):
                         self.cb_coordinates(report)
                         valid = True
-                        self.update_time = time.time();
+                        time.sleep(5);
+                        self.update_time = time.time()
+
 
                 # GPS does not want to talk with us, often happens on boot - will restart myself (the daemon) and be back in a minute...
                 if (time.time() - self.update_time) > GPS_TIMEOUT:

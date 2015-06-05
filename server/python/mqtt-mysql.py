@@ -7,7 +7,7 @@ import datetime
 import json
 
 def get_connection():
-    return mysql.connect(user='root', host='127.0.0.1', database='easycab')
+    return mysql.connect(user='easycab', password='raspberry', host='127.0.0.1', database='easycab')
 
 def add_driver(token):
     driver_id = 0
@@ -80,13 +80,11 @@ def on_message(client, userdata, msg):
         taxi_id = add_taxi(taxi['car'])
     query = "INSERT INTO position (taxi, driver, latitude, longitude) VALUES (%s, %s, %s, %s)"
     parameters = (str(taxi_id), str(driver_id), str(taxi['gps']['latitude']), str(taxi['gps']['longitude']))
-    print(query)
     try:
         cursor.execute(query, parameters)
         cnx.commit()
-        print("success")
     except:
-        print("error")
+        print("error on query: " + query)
     cursor.close()
     cnx.close()    
 
