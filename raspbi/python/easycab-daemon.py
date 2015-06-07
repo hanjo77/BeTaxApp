@@ -23,7 +23,6 @@ from subprocess import call
 # Configuration constants
 SERVER_HOSTNAME = "hanjo.synology.me"
 UID_NFC = "oDB"
-UID_GPS = "qGf"
 GPS_TIMEOUT = 10;
 tag_type = 0
 
@@ -93,7 +92,7 @@ class EasyCabListener():
     # Checks internet connection - returns true when connected, false when offline
     def internet_on(self):
         try:
-            response = urllib2.urlopen('http://' + SERVER_HOSTNAME,timeout=1)
+            response = urllib2.urlopen('http://' + SERVER_HOSTNAME)
             return True
 
         except urllib2.URLError as err:
@@ -106,10 +105,12 @@ class EasyCabListener():
 
         # Wait until we can connect - network may not be ready yet...
         while not self.internet_on():
-            call(["/root/check-network.sh"])
+            call(["/root/check-network.sh", ">", "/dev/null"])
+            print "offline"
             time.sleep(5)
             
         # Load MQTT client 
+        print "online"
         self.client = mqtt.Client()
         self.client.on_connect = self.on_connect
         self.client.connect(SERVER_HOSTNAME, 1883)
@@ -129,15 +130,16 @@ class EasyCabListener():
 
         while True:
             # Do your magic now - it's the main loop!
+            print "looping"
             try:
                 # Read GPS report and send it if we found a "lat" key
                 report = self.session.next()
+                print(report)
                 valid = False;
                 if report:
                     if hasattr(report, 'lat'):
                         self.cb_coordinates(report)
                         valid = True
-                        time.sleep(5);
                         self.update_time = time.time()
 
 
@@ -147,6 +149,7 @@ class EasyCabListener():
                     print "Restart GPSD"
 
             except KeyError:
+                print KeyError
                 pass
 
             except KeyboardInterrupt:
