@@ -27,7 +27,7 @@ function addPath() {
   var track = new google.maps.Polyline({
     path: path,
     geodesic: true,
-    strokeColor: '#FF0000',
+    strokeColor: '#cc0000',
     strokeOpacity: 1.0,
     strokeWeight: 2
   });
@@ -88,55 +88,61 @@ window.setInterval(updateMarkers, 1000);
 
 function addMarker(position) {
 
-	var driver = drivers[position.driver];
-	var center = ll(position.gps.latitude, position.gps.longitude);
-	updateBounds(center);
-	var marker = markers[position.car];
-	if (marker) {
+	if (position.driver) {
 
-		marker.setPosition(center);
-		$("#car_value").html(position.car);
-		$("#driver_value").html(driver);
-		$("#lat_value").html(center.lat());
-		$("#lng_value").html(center.lng());
-	}
-	else {
+		var driver = drivers[position.driver];
+		var center = ll(position.gps.latitude, position.gps.longitude);
+		updateBounds(center);
+		var marker = markers[position.car];
+		if (marker) {
 
-		marker = new google.maps.Marker({
-		    position: center,
-		    map: map,
-		    title: position.car
-		});
+			marker.setPosition(center);
+			$("#car_value").html(position.car);
+			$("#driver_value").html(driver);
+			$("#lat_value").html(center.lat());
+			$("#lng_value").html(center.lng());
+		}
+		else {
 
-		google.maps.event.addListener(marker, 'click', function() {
-			if (!infoWindow || !infoWindow.getMap()) {
+			marker = new google.maps.Marker({
+			    position: center,
+			    map: map,
+			    title: position.car
+			});
 
-				infoWindow = new google.maps.InfoWindow();
-				infoWindow.setContent("<h2 id=\"car_value\">" + position.car + "</h2>"
-									+ "<table>"
-										+ "<tr>"
-											+ "<th>Driver:</th>"
-											+ "<td id=\"driver_value\">" + driver + "</td>"
-										+ "</tr>"
-										+ "<tr>"
-											+ "<th>Latitude</th>"
-											+ "<td id=\"lat_value\">" + marker.position.lat() + "</td>"
-										+ "</tr>"
-										+ "<tr>"
-											+ "<th>Longitude</th>"
-											+ "<td id=\"lng_value\">" + marker.position.lng() + "</td>"
-										+ "</tr>"
-									+ "</table>");
-				infoWindow.close();
-				infoWindow.open(map,marker);
-			}
-		});
+			google.maps.event.addListener(marker, 'click', function() {
+				if (!infoWindow || !infoWindow.getMap()) {
 
-		markers[position.car] = marker;
-		map.fitBounds(new google.maps.LatLngBounds(
-			new google.maps.LatLng(bounds.lowLat, bounds.lowLon), 
-			new google.maps.LatLng(bounds.topLat, bounds.topLon)));
-		marker.setMap(map);
+					infoWindow = new google.maps.InfoWindow();
+					infoWindow.setContent("<h2 id=\"car_value\">" + position.car + "</h2>"
+										+ "<table>"
+											+ "<tr>"
+												+ "<th>Driver:</th>"
+												+ "<td id=\"driver_value\">" + driver + "</td>"
+											+ "</tr>"
+											+ "<tr>"
+												+ "<th>Latitude</th>"
+												+ "<td id=\"lat_value\">" + marker.position.lat() + "</td>"
+											+ "</tr>"
+											+ "<tr>"
+												+ "<th>Longitude</th>"
+												+ "<td id=\"lng_value\">" + marker.position.lng() + "</td>"
+											+ "</tr>"
+										+ "</table>");
+					infoWindow.close();
+					infoWindow.open(map,marker);
+				}
+			});
+
+			markers[position.car] = marker;
+			map.fitBounds(new google.maps.LatLngBounds(
+				new google.maps.LatLng(bounds.lowLat, bounds.lowLon), 
+				new google.maps.LatLng(bounds.topLat, bounds.topLon)));
+			marker.setMap(map);
+		}
+		if (path.length <= 0) {
+			map.panTo(center);
+		}
 	}
 }
 
