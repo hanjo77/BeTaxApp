@@ -12,7 +12,7 @@
     </style>
    	<script src="../jquery/jquery.min.js"></script>
    	<script src="https://maps.googleapis.com/maps/api/js?v=3.exp"></script>
-	<script src="path.js"></script>
+	<script src="maps.js"></script>
     <script type="text/javascript">
 
       var path = [<?php
