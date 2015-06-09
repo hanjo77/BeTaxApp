@@ -10,9 +10,11 @@
         padding: 0px
       }
     </style>
+    <link rel="shortcut icon" href="favicon.ico" type="image/x-icon; charset=binary" />
+    <link rel="icon" href="favicon.ico" type="image/x-icon; charset=binary" />
    	<script src="../jquery/jquery.min.js"></script>
    	<script src="https://maps.googleapis.com/maps/api/js?v=3.exp"></script>
-	<script src="maps.js"></script>
+	  <script src="maps.js"></script>
     <script type="text/javascript">
 
       var path = [<?php
