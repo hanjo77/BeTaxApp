@@ -87,8 +87,13 @@ class EasyCabListener():
 
     # Starts GPS listener
     def start_gps(self):
-        self.session = gps.gps("localhost", "2947")
-        self.session.stream(gps.WATCH_ENABLE | gps.WATCH_NEWSTYLE)
+        try:
+            self.session = gps.gps("localhost", "2947")
+            self.session.stream(gps.WATCH_ENABLE | gps.WATCH_NEWSTYLE)
+            pass
+        except Exception, e:
+            call(["service", "easycabd", "restart"])
+            pass
 
     # Checks internet connection - returns true when connected, false when offline
     def internet_on(self):

@@ -1,4 +1,4 @@
-var map;
+var map, infoWindow;
 var markers = {};
 var bounds = null;
 
@@ -109,30 +109,30 @@ function addMarker(position) {
 		});
 
 		google.maps.event.addListener(marker, 'click', function() {
-			var infoWindow = new google.maps.InfoWindow();
-			console.log(marker);
-			infoWindow.setContent("<h2 id=\"car_value\">" + position.car + "</h2>"
-								+ "<table>"
-									+ "<tr>"
-										+ "<th>Driver:</th>"
-										+ "<td id=\"driver_value\">" + driver + "</td>"
-									+ "</tr>"
-									+ "<tr>"
-										+ "<th>Latitude</th>"
-										+ "<td id=\"lat_value\">" + marker.position.lat() + "</td>"
-									+ "</tr>"
-									+ "<tr>"
-										+ "<th>Longitude</th>"
-										+ "<td id=\"lng_value\">" + marker.position.lng() + "</td>"
-									+ "</tr>"
-								+ "</table>");
-			infoWindow.close();
-			infoWindow.open(map,marker);
+			if (!infoWindow || !infoWindow.getMap()) {
+
+				infoWindow = new google.maps.InfoWindow();
+				infoWindow.setContent("<h2 id=\"car_value\">" + position.car + "</h2>"
+									+ "<table>"
+										+ "<tr>"
+											+ "<th>Driver:</th>"
+											+ "<td id=\"driver_value\">" + driver + "</td>"
+										+ "</tr>"
+										+ "<tr>"
+											+ "<th>Latitude</th>"
+											+ "<td id=\"lat_value\">" + marker.position.lat() + "</td>"
+										+ "</tr>"
+										+ "<tr>"
+											+ "<th>Longitude</th>"
+											+ "<td id=\"lng_value\">" + marker.position.lng() + "</td>"
+										+ "</tr>"
+									+ "</table>");
+				infoWindow.close();
+				infoWindow.open(map,marker);
+			}
 		});
 
 		markers[position.car] = marker;
-		// map.setCenter(center);
-		// map.setZoom(10);
 		map.fitBounds(new google.maps.LatLngBounds(
 			new google.maps.LatLng(bounds.lowLat, bounds.lowLon), 
 			new google.maps.LatLng(bounds.topLat, bounds.topLon)));

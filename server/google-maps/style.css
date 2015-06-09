@@ -4,6 +4,10 @@ html, body, #mapContainer {
 	padding: 0px
 }
 
+h2 {
+	text-align: center;
+}
+
 th {
-	text-align: left;
+	text-align: right;
 }
