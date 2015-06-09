@@ -24,6 +24,7 @@ from subprocess import call
 SERVER_HOSTNAME = "hanjo.synology.me"
 UID_NFC = "oDB"
 GPS_TIMEOUT = 10;
+GPS_INTERVAL = 5;
 tag_type = 0
 
 # Constructor
@@ -49,10 +50,10 @@ class EasyCabListener():
                     '"longitude":' + str(data.lon) +
                 '}'
             '}')
-            print(coordinates)
+            print(coordinates + "\n")
             self.client.publish("presence", coordinates, qos=0, retain=False)
 
-    # Callback function for state changed callback
+    # Callback function for RFID reader state changed callback
     def cb_state_changed(self, state, idle, nfc):
         # Cycle through all types"
         if idle:
@@ -67,11 +68,11 @@ class EasyCabListener():
             # Set environment variable DRIVER_ID to NFC tag ID
             if not hasattr(os.environ, "DRIVER_ID") or os.environ["DRIVER_ID"] != id:
                 os.environ["DRIVER_ID"] = id
-                print(id + " got connected")
+                print(id + " got connected\n")
             # GPS does not want to talk with us, often happens on boot - will restart myself (the daemon) and be back in a minute...
             if (time.time() - self.update_time) > GPS_TIMEOUT:
                 call(["service", "easycabd", "restart"])
-                print "Restart GPSD"
+                print "Restart GPSD\n"
     
     # Initializes daemon
     def __init__(self):
@@ -106,11 +107,11 @@ class EasyCabListener():
         # Wait until we can connect - network may not be ready yet...
         while not self.internet_on():
             call(["/root/check-network.sh", ">", "/dev/null"])
-            print "offline"
+            print "offline\n"
             time.sleep(5)
             
         # Load MQTT client 
-        print "online"
+        print "online\n"
         self.client = mqtt.Client()
         self.client.on_connect = self.on_connect
         self.client.connect(SERVER_HOSTNAME, 1883)
@@ -130,23 +131,23 @@ class EasyCabListener():
 
         while True:
             # Do your magic now - it's the main loop!
-            print "looping"
             try:
                 # Read GPS report and send it if we found a "lat" key
                 report = self.session.next()
-                print(report)
                 valid = False;
                 if report:
                     if hasattr(report, 'lat'):
-                        self.cb_coordinates(report)
+                        print (time.time() - self.update_time)
+                        if (time.time() - self.update_time) >= (GPS_INTERVAL-1):
+                            self.update_time = time.time()
+                            self.cb_coordinates(report)
                         valid = True
-                        self.update_time = time.time()
-
 
                 # GPS does not want to talk with us, often happens on boot - will restart myself (the daemon) and be back in a minute...
                 if (time.time() - self.update_time) > GPS_TIMEOUT:
+                    self.update_time = time.time()
                     call(["service", "easycabd", "restart"])
-                    print "Restart GPSD"
+                    print "Restart GPSD\n"
 
             except KeyError:
                 print KeyError
@@ -156,7 +157,7 @@ class EasyCabListener():
                 quit()
 
             except StopIteration:
-                print "GPSD Stopped " + str(self.update_time)
+                print "GPSD Stopped " + str(self.update_time + "\n")
 
 # Create and execute an instance of this class
 easyCabListener = EasyCabListener()

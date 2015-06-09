@@ -10,6 +10,65 @@ function initialize() {
     mapTypeId: google.maps.MapTypeId.SATELLITE
   };
   map = new google.maps.Map(document.getElementById('mapContainer'), mapOptions);
+  if (path) {
+
+  	addPath();
+  }
+}
+
+function ll(lat, lng) {
+
+	return new google.maps.LatLng(lat, lng);
+}
+
+function addPath() {
+
+  getBoundsFromPath();
+  var track = new google.maps.Polyline({
+    path: path,
+    geodesic: true,
+    strokeColor: '#FF0000',
+    strokeOpacity: 1.0,
+    strokeWeight: 2
+  });
+
+  track.setMap(map);
+}
+
+function getBoundsFromPath() {
+
+	if (path) {
+		for (var i = 0; i < path.length; i++) {
+
+			var latlng = path[i];
+			if (!bounds) {
+
+				bounds = {
+
+					"lowLat": latlng.lat(),
+					"lowLon": latlng.lng(),
+					"topLat": latlng.lat(),
+					"topLon": latlng.lng()
+				}
+			}
+			if (latlng.lat() < bounds.lowLat) {
+
+				bounds.lowLat = latlng.lat();
+			}
+			if (latlng.lat() > bounds.topLat) {
+
+				bounds.topLat = latlng.lat();
+			}
+			if (latlng.lng() < bounds.lowLon) {
+
+				bounds.lowLon = latlng.lng();
+			}
+			if (latlng.lng() > bounds.topLon) {
+
+				bounds.topLon = latlng.lng();
+			}
+		}
+	}
 }
 
 function updateMarkers() {
