@@ -3,15 +3,9 @@
 <head>
   <meta name="viewport" content="width=device-width, initial-scale=1">
 	<title>easyCab Test</title>
-    <style>
-      html, body, #mapContainer {
-        height: 100%;
-        margin: 0px;
-        padding: 0px
-      }
-    </style>
     <link rel="shortcut icon" href="favicon.ico" type="image/x-icon; charset=binary" />
     <link rel="icon" href="favicon.ico" type="image/x-icon; charset=binary" />
+    <link rel="stylesheet" href="style.css" type="text/css" />
    	<script src="../jquery/jquery.min.js"></script>
    	<script src="https://maps.googleapis.com/maps/api/js?v=3.exp"></script>
 	  <script src="maps.js"></script>
@@ -46,7 +40,22 @@
           }
         }
 
-        ?>];
+
+      ?>];
+      var drivers = {<?php
+
+        $drivers = $db_util->query("select * from `driver`");
+        $started = false;
+        for($i = 0; $i < sizeof($drivers); $i++) {
+          $driver = $drivers[$i];
+          if ($started) {
+            echo(",");
+          }
+          $started = true;
+          echo("\"".$driver["token"]."\":\"".$driver["firstname"]." ".$driver["lastname"]."\"");
+        }
+
+      ?>};
 
     </script>
 </head>

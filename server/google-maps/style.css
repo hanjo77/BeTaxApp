@@ -1,0 +1,9 @@
+html, body, #mapContainer {
+	height: 100%;
+	margin: 0px;
+	padding: 0px
+}
+
+th {
+	text-align: left;
+}

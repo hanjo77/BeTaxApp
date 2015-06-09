@@ -41,33 +41,38 @@ function getBoundsFromPath() {
 		for (var i = 0; i < path.length; i++) {
 
 			var latlng = path[i];
-			if (!bounds) {
-
-				bounds = {
-
-					"lowLat": latlng.lat(),
-					"lowLon": latlng.lng(),
-					"topLat": latlng.lat(),
-					"topLon": latlng.lng()
-				}
-			}
-			if (latlng.lat() < bounds.lowLat) {
-
-				bounds.lowLat = latlng.lat();
-			}
-			if (latlng.lat() > bounds.topLat) {
-
-				bounds.topLat = latlng.lat();
-			}
-			if (latlng.lng() < bounds.lowLon) {
-
-				bounds.lowLon = latlng.lng();
-			}
-			if (latlng.lng() > bounds.topLon) {
-
-				bounds.topLon = latlng.lng();
-			}
+			updateBounds(latlng);
 		}
+	}
+}
+
+function updateBounds(latlng) {
+
+	if (!bounds) {
+
+		bounds = {
+
+			"lowLat": latlng.lat(),
+			"lowLon": latlng.lng(),
+			"topLat": latlng.lat(),
+			"topLon": latlng.lng()
+		}
+	}
+	if (latlng.lat() < bounds.lowLat) {
+
+		bounds.lowLat = latlng.lat();
+	}
+	if (latlng.lat() > bounds.topLat) {
+
+		bounds.topLat = latlng.lat();
+	}
+	if (latlng.lng() < bounds.lowLon) {
+
+		bounds.lowLon = latlng.lng();
+	}
+	if (latlng.lng() > bounds.topLon) {
+
+		bounds.topLon = latlng.lng();
 	}
 }
 
@@ -83,40 +88,17 @@ window.setInterval(updateMarkers, 1000);
 
 function addMarker(position) {
 
-	var center = new google.maps.LatLng(position.gps.latitude, position.gps.longitude);
-	if (!bounds) {
-
-		bounds = {
-
-			"lowLat": position.gps.latitude,
-			"lowLon": position.gps.longitude,
-			"topLat": position.gps.latitude,
-			"topLon": position.gps.longitude
-		}
-	}
-	else {
-
-		if (position.gps.latitude < bounds.lowLat) {
-
-			bounds.lowLat = position.gps.latitude;
-		}
-		if (position.gps.latitude > bounds.topLat) {
-
-			bounds.topLat = position.gps.latitude;
-		}
-		if (position.gps.longitude < bounds.lowLon) {
-
-			bounds.lowLon = position.gps.longitude;
-		}
-		if (position.gps.longitude > bounds.topLon) {
-
-			bounds.topLon = position.gps.longitude;
-		}
-	}
+	var driver = drivers[position.driver];
+	var center = ll(position.gps.latitude, position.gps.longitude);
+	updateBounds(center);
 	var marker = markers[position.car];
 	if (marker) {
 
 		marker.setPosition(center);
+		$("#car_value").html(position.car);
+		$("#driver_value").html(driver);
+		$("#lat_value").html(center.lat());
+		$("#lng_value").html(center.lng());
 	}
 	else {
 
@@ -125,6 +107,29 @@ function addMarker(position) {
 		    map: map,
 		    title: position.car
 		});
+
+		google.maps.event.addListener(marker, 'click', function() {
+			var infoWindow = new google.maps.InfoWindow();
+			console.log(marker);
+			infoWindow.setContent("<h2 id=\"car_value\">" + position.car + "</h2>"
+								+ "<table>"
+									+ "<tr>"
+										+ "<th>Driver:</th>"
+										+ "<td id=\"driver_value\">" + driver + "</td>"
+									+ "</tr>"
+									+ "<tr>"
+										+ "<th>Latitude</th>"
+										+ "<td id=\"lat_value\">" + marker.position.lat() + "</td>"
+									+ "</tr>"
+									+ "<tr>"
+										+ "<th>Longitude</th>"
+										+ "<td id=\"lng_value\">" + marker.position.lng() + "</td>"
+									+ "</tr>"
+								+ "</table>");
+			infoWindow.close();
+			infoWindow.open(map,marker);
+		});
+
 		markers[position.car] = marker;
 		// map.setCenter(center);
 		// map.setZoom(10);
