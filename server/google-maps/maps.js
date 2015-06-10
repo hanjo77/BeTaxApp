@@ -4,16 +4,15 @@ var bounds = null;
 
 function initialize() {
 
-  var mapOptions = {
-    zoom: 3,
-    center: new google.maps.LatLng(0, 0),
-    mapTypeId: google.maps.MapTypeId.SATELLITE
-  };
-  map = new google.maps.Map(document.getElementById('mapContainer'), mapOptions);
-  if (path) {
-
-  	addPath();
-  }
+	var mapOptions = {
+		zoom: 3,
+		center: new google.maps.LatLng(0, 0),
+		mapTypeId: google.maps.MapTypeId.SATELLITE
+	};
+	map = new google.maps.Map(document.getElementById('mapContainer'), mapOptions);
+	if (path) {
+		addPath();
+	}
 }
 
 function ll(lat, lng) {
@@ -113,22 +112,29 @@ function addMarker(position) {
 			google.maps.event.addListener(marker, 'click', function() {
 				if (!infoWindow || !infoWindow.getMap()) {
 
+					var date = new Date(position.time).toLocaleDateString("de-CH", {
+						year: "numeric", month: "short",
+					    day: "numeric", hour: "2-digit", minute: "2-digit"
+					});
 					infoWindow = new google.maps.InfoWindow();
-					infoWindow.setContent("<h2 id=\"car_value\">" + position.car + "</h2>"
-										+ "<table>"
-											+ "<tr>"
-												+ "<th>Driver:</th>"
-												+ "<td id=\"driver_value\">" + driver + "</td>"
-											+ "</tr>"
-											+ "<tr>"
-												+ "<th>Latitude</th>"
-												+ "<td id=\"lat_value\">" + marker.position.lat() + "</td>"
-											+ "</tr>"
-											+ "<tr>"
-												+ "<th>Longitude</th>"
-												+ "<td id=\"lng_value\">" + marker.position.lng() + "</td>"
-											+ "</tr>"
-										+ "</table>");
+					infoWindow.setContent("<div id=\"infoWindow\">"
+											+ "<h2 id=\"car_value\">" + position.car + "</h2>"
+											+ "<span id=\"time_value\">" + date + "</span>"
+											+ "<table>"
+												+ "<tr>"
+													+ "<th>Fahrer</th>"
+													+ "<td id=\"driver_value\">" + driver + "</td>"
+												+ "</tr>"
+												+ "<tr>"
+													+ "<th>Breitengrad</th>"
+													+ "<td id=\"lat_value\">" + marker.position.lat() + "</td>"
+												+ "</tr>"
+												+ "<tr>"
+													+ "<th>Längengrad</th>"
+													+ "<td id=\"lng_value\">" + marker.position.lng() + "</td>"
+												+ "</tr>"
+											+ "</table>"
+										+ "</div>");
 					infoWindow.close();
 					infoWindow.open(map,marker);
 				}

@@ -23,7 +23,7 @@ from subprocess import call
 # Configuration constants
 SERVER_HOSTNAME = "hanjo.synology.me"
 UID_NFC = "oDB"
-GPS_TIMEOUT = 10;
+GPS_TIMEOUT = 10; # Has to be larger than GPS_INTERVAL
 GPS_INTERVAL = 5;
 tag_type = 0
 
@@ -143,7 +143,7 @@ class EasyCabListener():
                 if report:
                     if hasattr(report, 'lat'):
                         print (time.time() - self.update_time)
-                        if (time.time() - self.update_time) >= (GPS_INTERVAL-1):
+                        if round(time.time() - self.update_time, 0) >= GPS_INTERVAL:
                             self.update_time = time.time()
                             self.cb_coordinates(report)
                         valid = True

@@ -1,0 +1,6 @@
+- datenpakete verschlüsseln
+
+
+- Farbcodes für Status der Messungen
+
+- Nur aktive Taxis anzeigen
