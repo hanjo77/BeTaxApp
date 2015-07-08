@@ -22,9 +22,10 @@ from subprocess import call
 
 # Configuration constants
 SERVER_HOSTNAME = "hanjo.synology.me"
-UID_NFC = "oDB"
-GPS_TIMEOUT = 10; # Has to be larger than GPS_INTERVAL
-GPS_INTERVAL = 5;
+MQTT_PORT = 1883
+NFC_BRICKLET_ID = 246
+GPS_TIMEOUT = 10 # Has to be larger than GPS_INTERVAL
+GPS_INTERVAL = 5
 tag_type = 0
 
 # Constructor
@@ -84,6 +85,7 @@ class EasyCabListener():
         self.client = []
         self.session = []
         self.update_time = time.time();
+        self.nfc_uid = ""
 
     # Starts GPS listener
     def start_gps(self):
@@ -106,20 +108,25 @@ class EasyCabListener():
 
         return False
 
+    # Print incoming enumeration
+    def cb_enumerate(self, uid, connected_uid, position, hardware_version, firmware_version, device_identifier, enumeration_type):
+        if device_identifier == NFC_BRICKLET_ID:
+            print "Set UID for NFC sensor to " + uid
+            self.nfc_uid = uid
+
     # Run, daemon, run - Go for the main method
     def run(self):
-
         # Wait until we can connect - network may not be ready yet...
         while not self.internet_on():
             call(["/root/check-network.sh", ">", "/dev/null"])
-            print "offline\n"
+            print "offline"
             time.sleep(5)
             
         # Load MQTT client 
-        print "online\n"
+        print "online"
         self.client = mqtt.Client()
         self.client.on_connect = self.on_connect
-        self.client.connect(SERVER_HOSTNAME, 1883)
+        self.client.connect(SERVER_HOSTNAME, MQTT_PORT)
  
         # Start GPS listener
         self.start_gps()
@@ -129,8 +136,13 @@ class EasyCabListener():
         ipcon.connect("localhost", 4223) # Connect to brickd
         # Don't use device before ipcon is connected
 
+        ipcon.register_callback(IPConnection.CALLBACK_ENUMERATE, self.cb_enumerate)
+
+        while self.nfc_uid == "":
+            ipcon.enumerate()
+
         # Register state changed callback for NFC sensor to function cb_state_changed
-        nfc = NFCRFID(UID_NFC, ipcon)
+        nfc = NFCRFID(self.nfc_uid, ipcon)
         nfc.register_callback(nfc.CALLBACK_STATE_CHANGED, lambda x, y: self.cb_state_changed(x, y, nfc))
         nfc.request_tag_id(nfc.TAG_TYPE_MIFARE_CLASSIC)
 
@@ -152,7 +164,7 @@ class EasyCabListener():
                 if (time.time() - self.update_time) > GPS_TIMEOUT:
                     self.update_time = time.time()
                     call(["service", "easycabd", "restart"])
-                    print "Restart GPSD\n"
+                    print "Restart GPSD"
 
             except KeyError:
                 print KeyError
@@ -162,7 +174,7 @@ class EasyCabListener():
                 quit()
 
             except StopIteration:
-                print "GPSD Stopped " + str(self.update_time + "\n")
+                print "GPSD Stopped " + str(self.update_time)
 
 # Create and execute an instance of this class
 easyCabListener = EasyCabListener()
