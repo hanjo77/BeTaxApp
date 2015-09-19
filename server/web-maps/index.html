@@ -46,8 +46,8 @@ var client = new Paho.MQTT.Client("46.101.17.239", 10001,
 			myObj.gps.latitude,
 			myObj.gps.longitude
 			,recievedmsg); //add marker based on lattitude and longittude, using timestamp for description for now
-		center = bounds.getCenter(); //center on marker, zooms in to far atm, needs to be fixed!
-		map.fitBounds(bounds); 
+		// center = bounds.getCenter(); //center on marker, zooms in to far atm, needs to be fixed!
+		// map.fitBounds(bounds); 
 	};
 	
 	var options = {
@@ -113,7 +113,7 @@ function addMarker(lat, lng, info) {
 			currentPopup = popup;
 		});
 		google.maps.event.addListener(popup, "closeclick", function() {
-			map.panTo(center);
+			// map.panTo(center);
 			currentPopup = null;
 		});
 		markers[data.car] = marker;
