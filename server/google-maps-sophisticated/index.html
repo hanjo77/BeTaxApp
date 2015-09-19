@@ -2,15 +2,16 @@
 <html>
 <head>
     <meta name="viewport" content="initial-scale=1.0, user-scalable=no" />
+<script src="http://code.jquery.com/jquery-2.1.4.min.js"></script>
 <script src="http://maps.googleapis.com/maps/api/js?key=AIzaSyAsz3V9X_fTjwe-TzHtuA16-wjMZ71a7gY&sensor=false"></script>
 <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.6.4/jquery.min.js" type="text/javascript"></script>
 <script src="mqttws31.js" type="text/javascript"></script>
  
-<TITLE>MQTTitude - find my family & friends</title>
+<TITLE>EasyCab map</title>
  
 <style type="text/css">
   body { font: normal 10pt Helvetica, Arial; }
-	#map { width: 1200px; height: 800px; border: 0px; padding: 0px; }
+	#map { width: 1280px; height: 800px; border: 0px; padding: 0px; }
 </style>
 <script>
 // To be used with websockets, mqtt and http://mqttitude.org/ project for ios/android. 
@@ -40,12 +41,11 @@ var client = new Paho.MQTT.Client("46.101.17.239", 10001,
 		var recievedmsg = message.payloadString;
 		var myObj = jQuery.parseJSON(recievedmsg); //parse payload
 		var myDate = new Date(myObj.time *1000); //convert epoch time to readible local datetime
-		console.log('ParsedJSON -- Time: ', myObj.time,' Lat: ', myObj.gps.latitude,' Lon: ',myObj.gps.longitude);
-		var markerinfo = message.payloadString;
+		// console.log('ParsedJSON -- Time: ', myObj.time,' Lat: ', myObj.gps.latitude,' Lon: ',myObj.gps.longitude);
 		addMarker(
 			myObj.gps.latitude,
 			myObj.gps.longitude
-			,markerinfo); //add marker based on lattitude and longittude, using timestamp for description for now
+			,recievedmsg); //add marker based on lattitude and longittude, using timestamp for description for now
 		center = bounds.getCenter(); //center on marker, zooms in to far atm, needs to be fixed!
 		map.fitBounds(bounds); 
 	};
@@ -76,7 +76,7 @@ function addMarker(lat, lng, info) {
 	//console.log(lat, lng, info);
 	var data = jQuery.parseJSON(info);
 	var pt = new google.maps.LatLng(lat, lng);
-	bounds.extend(pt);
+	// bounds.extend(pt);
 	if (!markers[data.car]) {
 
 		var marker = new google.maps.Marker({
@@ -85,7 +85,23 @@ function addMarker(lat, lng, info) {
 			map: map
 		});
 		var popup = new google.maps.InfoWindow({
-			content: info,
+			content: '<div id="car' + data.car + '">'
+			+ '<h2>' + data.car + '</h2>'
+			+ '<table>'
+				+ '<tr>'
+					+ '<th>Time</th>'
+					+ '<td>' + data.time + '</td>'
+				+ '<tr>'
+				+ '<tr>'
+					+ '<th>Driver</th>'
+					+ '<td>' + data.driver + '</td>'
+				+ '<tr>'
+				+ '<tr>'
+					+ '<th>Position</th>'
+					+ '<td>' + data.gps.latitude + ', ' + data.gps.longitude + '</td>'
+				+ '<tr>'
+			+ '<table>'
+			+ '</div>',
 			maxWidth: 400
 		});
 		google.maps.event.addListener(marker, "click", function() {
@@ -110,9 +126,8 @@ function addMarker(lat, lng, info) {
 
 function initMap() {
 	map = new google.maps.Map(document.getElementById("map"), {
-		center: new google.maps.LatLng(0,0),
 		zoom: 10,
-		mapTypeId: google.maps.MapTypeId.ROADMAP,
+		mapTypeId: google.maps.MapTypeId.HYBRID,
 		mapTypeControl: true,
 		mapTypeControlOptions: {
 			style: google.maps.MapTypeControlStyle.HORIZONTAL_BAR
@@ -122,20 +137,35 @@ function initMap() {
 			style: google.maps.NavigationControlStyle.ZOOM_PAN
 		}
 	});
-	
-	center = bounds.getCenter();
-    map.fitBounds(bounds);
+	map.setCenter(new google.maps.LatLng(47.000,7.400));
+	// center = bounds.getCenter();
+    // map.fitBounds(bounds);
 	
 	/* Connect to MQTT broker */
 	client.connect(options);
 };
+
+function updateSize() {
+	$("#map").css({
+		width: $(window).width(),
+		height: $(window).height()
+	});
+}
+
+$(document).ready(function() {
+	updateSize();
+	initMap();
+	$(window).resize(function() {
+		updateSize();
+	});
+});
 
 </script>
  
 </head>
  
 <body>
-<body onload="initMap()" style="margin:0px; border:0px; padding:0px;">
+<body style="margin:0px; border:0px; padding:0px;">
  <div id="map"></div>
 </body>
 </html>
