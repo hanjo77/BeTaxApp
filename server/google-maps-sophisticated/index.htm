@@ -41,7 +41,7 @@ var client = new Paho.MQTT.Client("46.101.17.239", 10001,
 		var myObj = jQuery.parseJSON(recievedmsg); //parse payload
 		var myDate = new Date(myObj.time *1000); //convert epoch time to readible local datetime
 		console.log('ParsedJSON -- Time: ', myObj.time,' Lat: ', myObj.gps.latitude,' Lon: ',myObj.gps.longitude);
-		var markerinfo = myDate+'<br />'+message.destinationName+'<br />'+message.payloadString;
+		var markerinfo = message.payloadString;
 		addMarker(
 			myObj.gps.latitude,
 			myObj.gps.longitude
@@ -71,31 +71,41 @@ var center = null;
 var map = null;
 var currentPopup;
 var bounds = new google.maps.LatLngBounds();
+var markers = {};
 function addMarker(lat, lng, info) {
 	//console.log(lat, lng, info);
+	var data = jQuery.parseJSON(info);
 	var pt = new google.maps.LatLng(lat, lng);
 	bounds.extend(pt);
-	var marker = new google.maps.Marker({
-		position: pt,
-		icon: icon,
-		map: map
-	});
-	var popup = new google.maps.InfoWindow({
-		content: info,
-		maxWidth: 400
-	});
-	google.maps.event.addListener(marker, "click", function() {
-		if (currentPopup != null) {
-			currentPopup.close();
+	if (!markers[data.car]) {
+
+		var marker = new google.maps.Marker({
+			position: pt,
+			icon: icon,
+			map: map
+		});
+		var popup = new google.maps.InfoWindow({
+			content: info,
+			maxWidth: 400
+		});
+		google.maps.event.addListener(marker, "click", function() {
+			if (currentPopup != null) {
+				currentPopup.close();
+				currentPopup = null;
+			}
+			popup.open(map, marker);
+			currentPopup = popup;
+		});
+		google.maps.event.addListener(popup, "closeclick", function() {
+			map.panTo(center);
 			currentPopup = null;
-		}
-		popup.open(map, marker);
-		currentPopup = popup;
-	});
-	google.maps.event.addListener(popup, "closeclick", function() {
-		map.panTo(center);
-		currentPopup = null;
-	});
+		});
+		markers[data.car] = marker;
+	}
+	else {
+
+		markers[data.car].setPosition(new google.maps.LatLng(data.gps.latitude, data.gps.longitude));
+	}
 };
 
 function initMap() {
