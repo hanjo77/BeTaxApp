@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta name="viewport" content="initial-scale=1.0, user-scalable=no" />
+<script src="http://maps.googleapis.com/maps/api/js?key=AIzaSyAsz3V9X_fTjwe-TzHtuA16-wjMZ71a7gY&sensor=false"></script>
+<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.6.4/jquery.min.js" type="text/javascript"></script>
+<script src="mqttws31.js" type="text/javascript"></script>
+ 
+<TITLE>MQTTitude - find my family & friends</title>
+ 
+<style type="text/css">
+  body { font: normal 10pt Helvetica, Arial; }
+	#map { width: 1200px; height: 800px; border: 0px; padding: 0px; }
+</style>
+<script>
+// To be used with websockets, mqtt and http://mqttitude.org/ project for ios/android. 
+// You will also need to setup a google maps api key.https://code.google.com/apis/console
+// http://git.eclipse.org/c/paho/org.eclipse.paho.mqtt.javascript.git/plain/src/mqttws31.js
+// by Matthew Bordignon @bordignon September 2013
+//
+// to do list;
+// - fix zoom on marker
+// - fix icons so multiple topics are easily identified, ie. different color for each topic
+// - need to add smarts to catch invalid (ie. non mqttitude json) payload message, atm it just disconnects
+// -
+
+
+var client = new Paho.MQTT.Client("46.101.17.239", 10001,
+				"myclientid_" + parseInt(Math.random() * 100, 10));
+				
+
+	client.onConnectionLost = function (responseObject) {
+		alert("connection lost: " + responseObject.errorMessage);
+		console.log("connection lost");
+	};
+
+	client.onMessageArrived = function (message) {
+		// mqttitude mesaage recieved is in JSON format. See http://mqttitude.org/api.html	
+		//console.log(message.payloadString);	
+		var recievedmsg = message.payloadString;
+		var myObj = jQuery.parseJSON(recievedmsg); //parse payload
+		var myDate = new Date(myObj.time *1000); //convert epoch time to readible local datetime
+		console.log('ParsedJSON -- Time: ', myObj.time,' Lat: ', myObj.gps.latitude,' Lon: ',myObj.gps.longitude);
+		var markerinfo = myDate+'<br />'+message.destinationName+'<br />'+message.payloadString;
+		addMarker(
+			myObj.gps.latitude,
+			myObj.gps.longitude
+			,markerinfo); //add marker based on lattitude and longittude, using timestamp for description for now
+		center = bounds.getCenter(); //center on marker, zooms in to far atm, needs to be fixed!
+		map.fitBounds(bounds); 
+	};
+	
+	var options = {
+		timeout: 3,
+		onSuccess: function () {
+			// alert("Connected");
+			console.log("mqtt connected");
+			// Connection succeeded; subscribe to our topic
+			client.subscribe('presence', {qos: 0});
+		},
+		onFailure: function (message) {
+			alert("Connection failed: " + message.errorMessage);
+			console.log("connection failed");
+		}
+	};
+
+var icon = new google.maps.MarkerImage("http://maps.google.com/mapfiles/ms/micons/blue.png",
+		   new google.maps.Size(32, 32), new google.maps.Point(0, 0),
+		   new google.maps.Point(16, 32));
+var center = null;
+var map = null;
+var currentPopup;
+var bounds = new google.maps.LatLngBounds();
+function addMarker(lat, lng, info) {
+	//console.log(lat, lng, info);
+	var pt = new google.maps.LatLng(lat, lng);
+	bounds.extend(pt);
+	var marker = new google.maps.Marker({
+		position: pt,
+		icon: icon,
+		map: map
+	});
+	var popup = new google.maps.InfoWindow({
+		content: info,
+		maxWidth: 400
+	});
+	google.maps.event.addListener(marker, "click", function() {
+		if (currentPopup != null) {
+			currentPopup.close();
+			currentPopup = null;
+		}
+		popup.open(map, marker);
+		currentPopup = popup;
+	});
+	google.maps.event.addListener(popup, "closeclick", function() {
+		map.panTo(center);
+		currentPopup = null;
+	});
+};
+
+function initMap() {
+	map = new google.maps.Map(document.getElementById("map"), {
+		center: new google.maps.LatLng(0,0),
+		zoom: 10,
+		mapTypeId: google.maps.MapTypeId.ROADMAP,
+		mapTypeControl: true,
+		mapTypeControlOptions: {
+			style: google.maps.MapTypeControlStyle.HORIZONTAL_BAR
+		},
+		navigationControl: true,
+		navigationControlOptions: {
+			style: google.maps.NavigationControlStyle.ZOOM_PAN
+		}
+	});
+	
+	center = bounds.getCenter();
+    map.fitBounds(bounds);
+	
+	/* Connect to MQTT broker */
+	client.connect(options);
+};
+
+</script>
+ 
+</head>
+ 
+<body>
+<body onload="initMap()" style="margin:0px; border:0px; padding:0px;">
+ <div id="map"></div>
+</body>
+</html>
+
+

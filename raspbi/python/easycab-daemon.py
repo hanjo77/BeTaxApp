@@ -21,7 +21,7 @@ from daemon import runner
 from subprocess import call
 
 # Configuration constants
-SERVER_HOSTNAME = "hanjo.synology.me"
+SERVER_HOSTNAME = "46.101.17.239"
 MQTT_PORT = 1883
 NFC_BRICKLET_ID = 246
 GPS_TIMEOUT = 10 # Has to be larger than GPS_INTERVAL

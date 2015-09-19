@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-  
 
-SERVER = "hanjo.synology.me"
+SERVER = "46.101.17.239"
 PORT = 1883
 TAG = "presence"
 
