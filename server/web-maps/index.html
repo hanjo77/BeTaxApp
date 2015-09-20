@@ -86,19 +86,22 @@ function addMarker(lat, lng, info) {
 		});
 		var popup = new google.maps.InfoWindow({
 			content: '<div id="car' + data.car + '">'
-			+ '<h2>' + data.car + '</h2>'
+			+ '<h2 style="display: none;">' + data.car + '</h2>'
 			+ '<table>'
-				+ '<tr>'
+				+ '<tr class="time">'
 					+ '<th>Time</th>'
-					+ '<td>' + data.time + '</td>'
+					+ '<td data-key="time">' + data.time + '</td>'
 				+ '<tr>'
-				+ '<tr>'
+				+ '<tr class="driver">'
 					+ '<th>Driver</th>'
-					+ '<td>' + data.driver + '</td>'
+					+ '<td data-key="driver">' + data.driver + '</td>'
 				+ '<tr>'
-				+ '<tr>'
+				+ '<tr class="position">'
 					+ '<th>Position</th>'
-					+ '<td>' + data.gps.latitude + ', ' + data.gps.longitude + '</td>'
+					+ '<td>'
+						+ '<span data-key="gps.latitude">' + data.gps.latitude + '</span>, '
+						+ '<span data-key="gps.longitude">' + data.gps.longitude + '</span>'
+					+ '</td>'
 				+ '<tr>'
 			+ '<table>'
 			+ '</div>',
@@ -121,6 +124,10 @@ function addMarker(lat, lng, info) {
 	else {
 
 		markers[data.car].setPosition(new google.maps.LatLng(data.gps.latitude, data.gps.longitude));
+		$("*[data-key='time']").html(data.time);
+		$("*[data-key='driver']").html(data.driver);
+		$("*[data-key='gps.latitude']").html(data.gps.latitude);
+		$("*[data-key='gps.longitude']").html(data.gps.longitude);
 	}
 };
 
