@@ -64,9 +64,6 @@ var client = new Paho.MQTT.Client("46.101.17.239", 10001,
 		}
 	};
 
-var icon = new google.maps.MarkerImage("http://maps.google.com/mapfiles/ms/micons/blue.png",
-		   new google.maps.Size(32, 32), new google.maps.Point(0, 0),
-		   new google.maps.Point(16, 32));
 var center = null;
 var map = null;
 var currentPopup;
@@ -79,6 +76,9 @@ function addMarker(lat, lng, info) {
 	// bounds.extend(pt);
 	if (!markers[data.car]) {
 
+		var icon = new google.maps.MarkerImage("http://46.101.17.239/marker-png/marker.php?text=" + data.car,
+				   new google.maps.Size(160, 58), new google.maps.Point(0, 0),
+				   new google.maps.Point(80, 58));
 		var marker = new google.maps.Marker({
 			position: pt,
 			icon: icon,

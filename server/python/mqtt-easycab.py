@@ -6,8 +6,6 @@ import mysql.connector as mysql
 import datetime
 import json
 
-positionFilePath = "/volume1/web/easycab/positions.json"
-
 def get_connection():
     return mysql.connect(user='easycab', password='raspberry', host='127.0.0.1', database='easycab')
 
@@ -86,13 +84,7 @@ def on_message(client, userdata, msg):
         cursor.execute(query, parameters)
         cnx.commit()
     except:
-        print("error on query: " + query)        
-    try:
-        f = open(positionFilePath, 'w')
-        f.write(str(msg.payload))
-        f.close()
-    except Exception, e:
-        print "Can't write file: %s" % str(e)
+        print("error on query: " + query)
     cursor.close()
     cnx.close()    
 
@@ -100,7 +92,7 @@ client = mqtt.Client()
 client.on_connect = on_connect
 client.on_message = on_message
 
-client.connect("hanjo.synology.me", 1883, 60)
+client.connect("46.101.17.239", 1883, 60)
 
 # Blocking call that processes network traffic, dispatches callbacks and
 # handles reconnecting.
