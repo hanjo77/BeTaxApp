@@ -69,30 +69,34 @@ def on_connect(client, userdata, flags, rc):
 
 # The callback for when a PUBLISH message is received from the server.
 def on_message(client, userdata, msg):
-    cnx = get_connection()
-    cursor = cnx.cursor()
     taxi = json.loads(msg.payload)
-    driver_id = get_driver(taxi['driver'])
-    if driver_id <= 0:
-        driver_id = add_driver(taxi['driver'])
-    taxi_id = get_taxi(taxi['car'])
-    if taxi_id <= 0:
-        taxi_id = add_taxi(taxi['car'])
-    query = "INSERT INTO position (taxi, driver, latitude, longitude) VALUES (%s, %s, %s, %s)"
-    parameters = (str(taxi_id), str(driver_id), str(taxi['gps']['latitude']), str(taxi['gps']['longitude']))
     try:
-        cursor.execute(query, parameters)
-        cnx.commit()
-    except:
-        print("error on query: " + query)
-    cursor.close()
-    cnx.close()    
+        cnx = get_connection()
+        cursor = cnx.cursor()
+        driver_id = get_driver(taxi['driver'])
+        if driver_id <= 0:
+            driver_id = add_driver(taxi['driver'])
+        taxi_id = get_taxi(taxi['car'])
+        if taxi_id <= 0:
+            taxi_id = add_taxi(taxi['car'])
+        query = "INSERT INTO position (taxi, driver, latitude, longitude) VALUES (%s, %s, %s, %s)"
+        parameters = (str(taxi_id), str(driver_id), str(taxi['gps']['latitude']), str(taxi['gps']['longitude']))
+        try:
+            cursor.execute(query, parameters)
+            cnx.commit()
+        except:
+            print("error on query: " + query)
+        cursor.close()
+        cnx.close()
+    except AttributeError:
+        print(taxi)
+
 
 client = mqtt.Client()
 client.on_connect = on_connect
 client.on_message = on_message
 
-client.connect("46.101.17.239", 1883, 60)
+client.connect("46.101.17.239", 1883, 10)
 
 # Blocking call that processes network traffic, dispatches callbacks and
 # handles reconnecting.

@@ -36,6 +36,7 @@ class EasyCabListener():
         print("Connected with result code "+str(rc))
         # Subscribing in on_connect() means that if we lose the connection and
         # reconnect then subscriptions will be renewed.
+        self.client.will_set("presence", '{ "disconnected": "' + socket.gethostname() + '" }', qos=0, retain=True);
         self.client.subscribe("presence")
 
     # Callback function for coordinates
@@ -126,7 +127,7 @@ class EasyCabListener():
         print "online"
         self.client = mqtt.Client()
         self.client.on_connect = self.on_connect
-        self.client.connect(SERVER_HOSTNAME, MQTT_PORT)
+        self.client.connect(SERVER_HOSTNAME, MQTT_PORT, keepalive=10)
  
         # Start GPS listener
         self.start_gps()

@@ -14,7 +14,7 @@ body {
 
 #menu {
 	background-image: url(logo.png);
-	background-position: center 25px;
+	background-position: 5px 25px;
 	background-repeat: no-repeat;
     width: 280px;
     padding-top: 150px;
@@ -28,7 +28,14 @@ body {
 	padding: 0;
 }
 
-#menu ul h2 {
+a.btn {
+	font-size: 1.5em;
+	text-decoration: none;
+	padding-left: 2em;
+	padding-right: 2em;
+}
+
+#menu ul h2, a.btn {
 	font-weight: normal;
 	text-align: center;
 	margin: 0;
@@ -49,6 +56,7 @@ body {
 	margin: 0;
 	padding: 0;
 	border: 0;
+	width: 100%;
 	border-collapse: collapse;
 }
 
@@ -77,4 +85,10 @@ body {
 	background: -ms-linear-gradient(top,  #f7de94 0%,#f8d360 100%); /* IE10+ */
 	background: linear-gradient(to bottom,  #f7de94 0%,#f8d360 100%); /* W3C */
 	filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#f7de94', endColorstr='#f8d360',GradientType=0 ); /* IE6-9 */
+}
+
+#resetView {
+	position: absolute;
+	top: 0;
+	right: 0;
 }
