@@ -54,7 +54,7 @@ function removeMarker(key) {
 	var marker = markers[key];
 	if (marker) {
 		marker.setMap(null);
-		$("#car" + key).remove();
+		$(".car" + key).remove();
 		markers[key] = null;
 		if (key == activeMarker) {
 			activeMarker = null;
@@ -78,28 +78,35 @@ function addMarker(lat, lng, info) {
 			map: map
 		});
 
-		var tableData = '<table class="car' + data.car + '">'
-				+ '<tr class="time">'
-					+ '<th>Time</th>'
-					+ '<td data-key="time">' + formatDateTime(data.time) + '</td>'
-				+ '<tr>'
-				+ '<tr class="driver">'
-					+ '<th>Driver</th>'
-					+ '<td data-key="driver">' + getDriverNameFromToken(data.driver) + '</td>'
-				+ '<tr>'
-				+ '<tr class="position">'
-					+ '<th>Position</th>'
-					+ '<td>'
-						+ '<span data-key="gps.latitude">' + data.gps.latitude.toFixed(7) + '</span>, '
-						+ '<span data-key="gps.longitude">' + data.gps.longitude.toFixed(7) + '</span>'
-					+ '</td>'
-				+ '<tr>'
+		var tableData = '<table>'
+				+ '<tbody>'
+					+ '<tr class="time">'
+						+ '<th>Time</th>'
+						+ '<td data-key="time">' + formatDateTime(data.time) + '</td>'
+					+ '<tr>'
+					+ '<tr class="driver">'
+						+ '<th>Driver</th>'
+						+ '<td data-key="driver">' + getDriverNameFromToken(data.driver) + '</td>'
+					+ '<tr>'
+					+ '<tr class="position">'
+						+ '<th>Position</th>'
+						+ '<td>'
+							+ '<span data-key="gps.latitude">' + data.gps.latitude.toFixed(7) + '</span>, '
+							+ '<span data-key="gps.longitude">' + data.gps.longitude.toFixed(7) + '</span>'
+						+ '</td>'
+					+ '<tr>'
+				+ '</tbody>'
 			+ '<table>';
 
-		$("#menu ul").append('<li id="car' + data.car + '">'
-			+ '<h2>' + data.car + '</h2>'
-			+ tableData
-			+ '</li>');
+		$("#accordion").append('<h3 class="car' + data.car + '">' + data.car + '</h3>'
+			+ '<div class="car' + data.car + '">'
+				+ tableData
+			+ '</div>');
+
+		var elem = $('#accordion').find('h3, div').sort(sortByTagAndClass);
+		$("#accordion").accordion("refresh");
+
+		updateSize();
 
 		/* var popup = new google.maps.InfoWindow({
 			content: '<div class="carInfo">'
@@ -112,6 +119,8 @@ function addMarker(lat, lng, info) {
 			currentPopup = null;
 		}); */
 		google.maps.event.addListener(marker, "click", function() {
+			var index = Math.floor(parseInt($(".car" + data.car).attr("id").replace("ui-id-", ""), 10) / 2);
+		    $("#accordion").accordion({ active: index });
 			map.setCenter(new google.maps.LatLng(
 				parseFloat($(".car" + data.car + " *[data-key='gps.latitude']").html()),
 				parseFloat($(".car" + data.car + " *[data-key='gps.longitude']").html())));
@@ -143,7 +152,12 @@ function addMarker(lat, lng, info) {
 	if (activeMarker) {
 		new google.maps.event.trigger(markers[activeMarker], 'click');
 	}
+	updateSize();
 };
+
+function sortByTagAndClass(a, b) {
+    return (a.className < b.className || a.tagName > b.tagName);
+}
 
 function initMap() {
 	map = new google.maps.Map(document.getElementById("map"), {
@@ -174,9 +188,17 @@ function initMap() {
 };
 
 function updateSize() {
+	var mapWidth = $(window).width();
+	var mapHeight = $(window).height();
+	if(window.innerHeight < window.innerWidth) {
+		mapWidth -= $("#menu").outerWidth();
+	}
+	else {
+		mapHeight -= $("#menu").outerHeight();
+	}
 	$("#map").css({
-		width: $(window).width()-$("#menu").width(),
-		height: $(window).height()
+		width: mapWidth,
+		height: mapHeight
 	});
 }
 
@@ -190,7 +212,7 @@ function getDatabase() {
 }
 
 function getDriverNameFromToken(token) {
-	if (database.drivers[token]) {
+	if (database && database.drivers && database.drivers[token]) {
 		return database.drivers[token].name;
 	}
 	return token;
@@ -208,8 +230,9 @@ function formatDateTime(timeString) {
 
 $(document).ready(function() {
 	getDatabase();
-	updateSize();
 	initMap();
+	updateSize();
+	$("#accordion").accordion();
 	$(window).resize(function() {
 		updateSize();
 	});

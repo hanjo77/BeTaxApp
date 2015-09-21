@@ -19,7 +19,7 @@ body {
     width: 280px;
     padding-top: 150px;
     display: block;
-    float: left;
+    float: right;
 }
 
 #menu ul {
@@ -35,7 +35,8 @@ a.btn {
 	padding-right: 2em;
 }
 
-#menu ul h2, a.btn {
+#accordion h3, a.btn {
+	cursor: pointer;
 	font-weight: normal;
 	text-align: center;
 	margin: 0;
@@ -52,7 +53,7 @@ a.btn {
 	filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#f7de94', endColorstr='#f8d360',GradientType=0 ); /* IE6-9 */
 }
 
-#menu ul table {
+#accordion table {
 	margin: 0;
 	padding: 0;
 	border: 0;
@@ -60,21 +61,21 @@ a.btn {
 	border-collapse: collapse;
 }
 
-#menu ul table td,
-#menu ul table th {
+#accordion table td,
+#accordion table th {
 	border: 0;
 	margin: 0;
 	padding: .5em;
 	border-bottom: 2px solid #315aa6;
 }
 
-#menu ul table th {
+#accordion table th {
 	text-align: right;
 	background-color: #315aa6;
 	color: #f7de94;
 }
 
-#menu ul table td {
+#accordion table td {
 	color: #315aa6;
 	border-right: 2px solid #315aa6;
 	background: #f7de94; /* Old browsers */
@@ -91,4 +92,18 @@ a.btn {
 	position: absolute;
 	top: 0;
 	right: 0;
+}
+
+/* #### Mobile Phones Portrait #### */
+@media screen and (orientation: portrait){
+
+	#menu {
+		background-image: url(logo.png);
+		background-position: 5px 5px;
+		background-repeat: no-repeat;
+		background-size: 30%;
+		width: 100%;
+		padding-top: 60px;
+		display: block;
+	}
 }
