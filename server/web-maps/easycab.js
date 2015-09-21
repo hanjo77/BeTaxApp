@@ -23,7 +23,7 @@ client.onMessageArrived = function (message) {
 			myObj.gps.longitude
 			,recievedmsg); //add marker based on lattitude and longittude, using timestamp for description for now
 		// center = bounds.getCenter(); //center on marker, zooms in to far atm, needs to be fixed!
-		// map.fitBounds(bounds); 
+		// map.fitBounds(bounds);
 	}
 };
 
@@ -47,6 +47,7 @@ var currentPopup;
 var bounds = new google.maps.LatLngBounds();
 var activeMarker = null;
 var markers = {};
+var timeouts = {};
 var database = {};
 
 function removeMarker(key) {
@@ -133,6 +134,12 @@ function addMarker(lat, lng, info) {
 		$(".car" + data.car + " *[data-key='gps.latitude']").html(data.gps.latitude.toFixed(7));
 		$(".car" + data.car + " *[data-key='gps.longitude']").html(data.gps.longitude.toFixed(7));
 	}
+	if (timeouts[data.car]) {
+		window.clearTimeout(timeouts[data.car]);
+	}
+	timeouts[data.car] = window.setTimeout(function() {
+		removeMarker(data.car);
+	}, 10000);
 	if (activeMarker) {
 		new google.maps.event.trigger(markers[activeMarker], 'click');
 	}
