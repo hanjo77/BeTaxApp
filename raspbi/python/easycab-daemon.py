@@ -15,6 +15,7 @@ import socket
 import paho.mqtt.client as mqtt
 import gps
 import urllib2
+from lockfile import LockTimeout
 from tinkerforge.ip_connection import IPConnection
 from tinkerforge.bricklet_nfc_rfid import NFCRFID
 from daemon import runner
@@ -73,8 +74,8 @@ class EasyCabListener():
                 print(id + " got connected\n")
             # GPS does not want to talk with us, often happens on boot - will restart myself (the daemon) and be back in a minute...
             if (time.time() - self.update_time) > GPS_TIMEOUT:
-                call(["service", "easycabd", "restart"])
                 print "Restart GPSD\n"
+                call(["service", "easycabd", "restart"])
     
     # Initializes daemon
     def __init__(self):
@@ -119,8 +120,8 @@ class EasyCabListener():
     def run(self):
         # Wait until we can connect - network may not be ready yet...
         while not self.internet_on():
-            call(["/root/check-network.sh", ">", "/dev/null"])
             print "offline"
+            call(["/root/check-network.sh", ">", "/dev/null"])
             time.sleep(5)
             
         # Load MQTT client 
@@ -149,6 +150,11 @@ class EasyCabListener():
 
         while True:
             # Do your magic now - it's the main loop!
+            while not self.internet_on():
+                print "offline"
+                call(["/root/check-network.sh", ">", "/dev/null"])
+                time.sleep(5)
+            
             try:
                 # Read GPS report and send it if we found a "lat" key
                 report = self.session.next()
@@ -169,6 +175,7 @@ class EasyCabListener():
 
             except KeyError:
                 print KeyError
+                call(["service", "easycabd", "restart"])
                 pass
 
             except KeyboardInterrupt:
@@ -176,8 +183,13 @@ class EasyCabListener():
 
             except StopIteration:
                 print "GPSD Stopped " + str(self.update_time)
+                call(["service", "easycabd", "restart"])
 
 # Create and execute an instance of this class
 easyCabListener = EasyCabListener()
 daemon_runner = runner.DaemonRunner(easyCabListener)
-daemon_runner.do_action()
+try:
+    daemon_runner.do_action()
+except LockTimeout:
+    print "Error: couldn't aquire lock, will restart daemon"
+    call(["service", "easycabd", "restart"])
