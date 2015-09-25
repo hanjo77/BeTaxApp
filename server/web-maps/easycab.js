@@ -70,8 +70,8 @@ function addMarker(lat, lng, info) {
 	if (!markers[data.car]) {
 
 		var icon = new google.maps.MarkerImage("http://46.101.17.239/marker-png/marker.php?text=" + data.car,
-				   new google.maps.Size(160, 58), new google.maps.Point(0, 0),
-				   new google.maps.Point(80, 58));
+				   new google.maps.Size(120, 48), new google.maps.Point(0, 0),
+				   new google.maps.Point(60, 48));
 		var marker = new google.maps.Marker({
 			position: pt,
 			icon: icon,

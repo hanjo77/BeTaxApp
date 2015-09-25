@@ -29,7 +29,7 @@ body {
 }
 
 a.btn {
-	font-size: 1.5em;
+	font-size: 1.2em;
 	text-decoration: none;
 	padding-left: 2em;
 	padding-right: 2em;
@@ -73,6 +73,21 @@ a.btn {
 	text-align: right;
 	background-color: #315aa6;
 	color: #f7de94;
+}
+
+.ui-accordion-header-icon {
+	background: url(arrows.png) -24px 0;
+	background-repeat: no-repeat;
+	margin: -2px 0 0 0;
+	padding: 0;
+    width: 24px;
+    height: 24px;
+    display: inline-block;
+    float: left;
+}
+
+.ui-accordion-header-active .ui-accordion-header-icon {
+	background-position: -49px 0;
 }
 
 #accordion table td {
