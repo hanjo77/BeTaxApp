@@ -53,13 +53,27 @@ var database = {};
 function removeMarker(key) {
 	var marker = markers[key];
 	if (marker) {
-		marker.setMap(null);
+		/* marker.setMap(null);
 		$(".car" + key).remove();
-		markers[key] = null;
+		markers[key] = null; */
 		if (key == activeMarker) {
 			activeMarker = null;
 		}
+		marker.setIcon("http://46.101.17.239/marker-png/marker.php?inactive=true&text=" + key);
 	}
+	$("h3.car" + key).removeClass("active");
+}
+
+function refreshAccordion() {
+	$("#accordion").accordion("refresh");
+	$("#accordion h3").click(function(event) {
+		var $target = $(event.target);
+		var targetId = $target.attr("id");
+		if (markers[targetId]) {
+
+			new google.maps.event.trigger(markers[targetId], 'click');
+		}
+	});
 }
 
 function addMarker(lat, lng, info) {
@@ -101,14 +115,15 @@ function addMarker(lat, lng, info) {
 					+ '</tbody>'
 				+ '<table>';
 
-			$("#accordion").append('<h3 class="car' + data.car + '">' + data.car + '</h3>'
+			$("#accordion").append('<h3 id="' + data.car + '" class="car' + data.car + '">' + data.car + '</h3>'
 				+ '<div class="car' + data.car + '">'
 					+ tableData
 				+ '</div>');
-		} 
+		}
 
 		var elem = $('#accordion').find('h3, div').sort(sortByTagAndClass);
-		$("#accordion").accordion("refresh");
+		refreshAccordion();			
+
 
 		updateSize();
 
@@ -142,17 +157,21 @@ function addMarker(lat, lng, info) {
 	else {
 
 		markers[data.car].setPosition(new google.maps.LatLng(data.gps.latitude, data.gps.longitude));
+		markers[data.car].setIcon("http://46.101.17.239/marker-png/marker.php?text=" + data.car);
+	}
+
 		$(".car" + data.car + " *[data-key='time']").html(formatDateTime(data.time));
 		$(".car" + data.car + " *[data-key='driver']").html(getDriverNameFromToken(data.driver));
 		$(".car" + data.car + " *[data-key='gps.latitude']").html(data.gps.latitude.toFixed(7));
 		$(".car" + data.car + " *[data-key='gps.longitude']").html(data.gps.longitude.toFixed(7));
-	}
+		$('h3.car' + data.car).addClass("active");
+
 	if (timeouts[data.car]) {
 		window.clearTimeout(timeouts[data.car]);
 	}
 	timeouts[data.car] = window.setTimeout(function() {
 		removeMarker(data.car);
-	}, 10000);
+	}, 15000);
 	if (activeMarker) {
 		new google.maps.event.trigger(markers[activeMarker], 'click');
 	}
@@ -236,14 +255,14 @@ $(document).ready(function() {
 	getDatabase();
 	initMap();
 	updateSize();
-	$("#accordion").accordion();
 	$(window).resize(function() {
 		updateSize();
 	});
 	$.ajax({
-        url: "/data/menu",
+        url: "/menu",
         success: function( data ) {
             $('#accordion').html(data);
+			$("#accordion").accordion();
         }
     });
 });

@@ -53,6 +53,32 @@ a.btn {
 	filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#f7de94', endColorstr='#f8d360',GradientType=0 ); /* IE6-9 */
 }
 
+#accordion h3 {
+	border: 2px solid #315aa6;
+	color: #f7de94;
+	background: #315aa6; /* Old browsers */
+	background: -moz-linear-gradient(top,  #194184 0%, #315aa6 100%); /* FF3.6+ */
+	background: -webkit-gradient(linear, left top, left bottom, color-stop(0%,#194184), color-stop(100%,#315aa6)); /* Chrome,Safari4+ */
+	background: -webkit-linear-gradient(top,  #194184 0%,#315aa6 100%); /* Chrome10+,Safari5.1+ */
+	background: -o-linear-gradient(top,  #194184 0%,#315aa6 100%); /* Opera 11.10+ */
+	background: -ms-linear-gradient(top,  #194184 0%,#315aa6 100%); /* IE10+ */
+	background: linear-gradient(to bottom,  #194184 0%,#315aa6 100%); /* W3C */
+	filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#f7de94', endColorstr='#f8d360',GradientType=0 ); /* IE6-9 */
+}
+
+#accordion h3.active {
+	border: 2px solid #315aa6;
+	color: #315aa6;
+	background: #f7de94; /* Old browsers */
+	background: -moz-linear-gradient(top,  #f7de94 0%, #f8d360 100%); /* FF3.6+ */
+	background: -webkit-gradient(linear, left top, left bottom, color-stop(0%,#f7de94), color-stop(100%,#f8d360)); /* Chrome,Safari4+ */
+	background: -webkit-linear-gradient(top,  #f7de94 0%,#f8d360 100%); /* Chrome10+,Safari5.1+ */
+	background: -o-linear-gradient(top,  #f7de94 0%,#f8d360 100%); /* Opera 11.10+ */
+	background: -ms-linear-gradient(top,  #f7de94 0%,#f8d360 100%); /* IE10+ */
+	background: linear-gradient(to bottom,  #f7de94 0%,#f8d360 100%); /* W3C */
+	filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#f7de94', endColorstr='#f8d360',GradientType=0 ); /* IE6-9 */
+}
+
 #accordion table {
 	margin: 0;
 	padding: 0;
@@ -76,7 +102,7 @@ a.btn {
 }
 
 .ui-accordion-header-icon {
-	background: url(arrows.png) -24px 0;
+	background: url(arrows-inactive.png) -24px 0;
 	background-repeat: no-repeat;
 	margin: -2px 0 0 0;
 	padding: 0;
@@ -86,7 +112,15 @@ a.btn {
     float: left;
 }
 
+h3.active .ui-accordion-header-icon {
+	background: url(arrows.png) -24px 0;
+}
+
 .ui-accordion-header-active .ui-accordion-header-icon {
+	background-position: -49px 0;
+}
+
+h3.active.ui-accordion-header-active .ui-accordion-header-icon {
 	background-position: -49px 0;
 }
 

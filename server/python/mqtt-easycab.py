@@ -79,8 +79,8 @@ def on_message(client, userdata, msg):
         taxi_id = get_taxi(taxi['car'])
         if taxi_id <= 0:
             taxi_id = add_taxi(taxi['car'])
-        query = "INSERT INTO data_position (taxi_id, driver_id, latitude, longitude) VALUES (%s, %s, %s, %s)"
-        parameters = (str(taxi_id), str(driver_id), str(taxi['gps']['latitude']), str(taxi['gps']['longitude']))
+        query = "INSERT INTO data_position (taxi_id, driver_id, latitude, longitude, time) VALUES (%s, %s, %s, %s, %s)"
+        parameters = (str(taxi_id), str(driver_id), str(taxi['gps']['latitude']), str(taxi['gps']['longitude']), datetime.datetime.now())
         try:
             cursor.execute(query, parameters)
             cnx.commit()
@@ -88,8 +88,9 @@ def on_message(client, userdata, msg):
             print("error on query: " + query)
         cursor.close()
         cnx.close()
-    except AttributeError:
+    except AttributeError, e:
         print(taxi)
+        print(str(e))
 
 
 client = mqtt.Client()
