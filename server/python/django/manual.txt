@@ -1,0 +1,2 @@
+apt-get install python-dev libmysqlclient-dev libapache2-mod-wsgi
+pip install Django MySQL-python django-cors-headers

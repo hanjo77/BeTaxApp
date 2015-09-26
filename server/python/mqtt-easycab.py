@@ -14,7 +14,7 @@ def add_driver(token):
     cnx = get_connection()
     cursor = cnx.cursor()
     try:
-        cursor.execute("INSERT INTO driver (token) VALUES ('" + token + "')")
+        cursor.execute("INSERT INTO data_driver (token) VALUES ('" + token + "')")
         driver_id = cursor.lastrowid
     except:
         driver_id = 0
@@ -27,7 +27,7 @@ def get_driver(token):
     driver_id = 0
     cnx = get_connection()
     cursor = cnx.cursor()
-    result = cursor.execute("SELECT id FROM driver WHERE token = '" + token + "'")
+    result = cursor.execute("SELECT id FROM data_driver WHERE token = '" + token + "'")
     for (id) in cursor:
         driver_id = id[0]
     cursor.close()
@@ -39,7 +39,7 @@ def add_taxi(name):
     cnx = get_connection()
     cursor = cnx.cursor()
     try:
-        cursor.execute("INSERT INTO taxi (name) VALUES ('" + name + "')")
+        cursor.execute("INSERT INTO data_taxi (name) VALUES ('" + name + "')")
         driver_id = cursor.lastrowid
     except:
         taxi_id = 0
@@ -52,7 +52,7 @@ def get_taxi(name):
     taxi_id = 0
     cnx = get_connection()
     cursor = cnx.cursor()
-    result = cursor.execute("SELECT id FROM taxi WHERE name = '" + name + "'")
+    result = cursor.execute("SELECT id FROM data_taxi WHERE name = '" + name + "'")
     for (id) in cursor:
         taxi_id = id[0]
     cursor.close()
@@ -79,7 +79,7 @@ def on_message(client, userdata, msg):
         taxi_id = get_taxi(taxi['car'])
         if taxi_id <= 0:
             taxi_id = add_taxi(taxi['car'])
-        query = "INSERT INTO position (taxi, driver, latitude, longitude) VALUES (%s, %s, %s, %s)"
+        query = "INSERT INTO data_position (taxi_id, driver_id, latitude, longitude) VALUES (%s, %s, %s, %s)"
         parameters = (str(taxi_id), str(driver_id), str(taxi['gps']['latitude']), str(taxi['gps']['longitude']))
         try:
             cursor.execute(query, parameters)
