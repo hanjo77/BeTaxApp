@@ -66,9 +66,9 @@ function removeMarker(key) {
 
 function refreshAccordion() {
 	$("#accordion").accordion("refresh");
-	$("#accordion h3").click(function(event) {
+	$("#accordion h3.ui-state-active").click(function(event) {
 		var $target = $(event.target);
-		var targetId = $target.attr("id");
+		var targetId = $target.attr("data-key");
 		if (markers[targetId]) {
 
 			new google.maps.event.trigger(markers[targetId], 'click');
@@ -86,6 +86,13 @@ function addMarker(lat, lng, info) {
 		var icon = new google.maps.MarkerImage("http://46.101.17.239/marker-png/marker.php?text=" + data.car,
 				   new google.maps.Size(120, 48), new google.maps.Point(0, 0),
 				   new google.maps.Point(60, 48));
+
+		if (!data.time) {
+			icon = new google.maps.MarkerImage("http://46.101.17.239/marker-png/marker.php?inactive=true&text=" + data.car,
+				   new google.maps.Size(120, 48), new google.maps.Point(0, 0),
+				   new google.maps.Point(60, 48));
+
+		}
 
 		var marker = new google.maps.Marker({
 			position: pt,
@@ -115,14 +122,13 @@ function addMarker(lat, lng, info) {
 					+ '</tbody>'
 				+ '<table>';
 
-			$("#accordion").append('<h3 id="' + data.car + '" class="car' + data.car + '">' + data.car + '</h3>'
+			$("#accordion").append('<h3 id="' + data.car + '" class="car' + data.car + '" data-key="' + data.car + '" data-position="' + data.gps.latitude.toFixed(7) + "," + data.gps.longitude.toFixed(7) + '">' + data.car + '</h3>'
 				+ '<div class="car' + data.car + '">'
 					+ tableData
 				+ '</div>');
 		}
 
-		var elem = $('#accordion').find('h3, div').sort(sortByTagAndClass);
-		refreshAccordion();			
+		var elem = $('#accordion').find('h3, div').sort(sortByTagAndClass);			
 
 
 		updateSize();
@@ -160,11 +166,14 @@ function addMarker(lat, lng, info) {
 		markers[data.car].setIcon("http://46.101.17.239/marker-png/marker.php?text=" + data.car);
 	}
 
+	if (data.time) {
+
 		$(".car" + data.car + " *[data-key='time']").html(formatDateTime(data.time));
 		$(".car" + data.car + " *[data-key='driver']").html(getDriverNameFromToken(data.driver));
 		$(".car" + data.car + " *[data-key='gps.latitude']").html(data.gps.latitude.toFixed(7));
 		$(".car" + data.car + " *[data-key='gps.longitude']").html(data.gps.longitude.toFixed(7));
 		$('h3.car' + data.car).addClass("active");
+	}
 
 	if (timeouts[data.car]) {
 		window.clearTimeout(timeouts[data.car]);
@@ -176,6 +185,7 @@ function addMarker(lat, lng, info) {
 		new google.maps.event.trigger(markers[activeMarker], 'click');
 	}
 	updateSize();
+	refreshAccordion();
 };
 
 function sortByTagAndClass(a, b) {
@@ -259,10 +269,19 @@ $(document).ready(function() {
 		updateSize();
 	});
 	$.ajax({
-        url: "/menu",
+        url: "/data/menu",
         success: function( data ) {
             $('#accordion').html(data);
 			$("#accordion").accordion();
+			$("#accordion h3").each(function(index, object) {
+				var $object = $(object);
+				var latlng = $object.attr("data-position").split(",");
+				var key = $object.attr("data-key");
+				if (!markers[key]) {
+					addMarker(latlng[0], latlng[1], '{ "car": "' + key + '", "gps": { "latitude": ' + latlng[0] + ', "longitude": ' + latlng[1] + ' } }');
+				}
+			});
+			refreshAccordion();
         }
     });
 });

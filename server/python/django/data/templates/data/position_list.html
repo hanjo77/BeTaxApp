@@ -1,0 +1,24 @@
+{% for choice in object_list %}
+<h3 class="car{{ choice.taxi.name }}" data-position="{{ choice.latitude }},{{ choice.longitude }}" data-key="{{ choice.taxi.name }}">{{ choice.taxi.name }}</h3>
+<div class="car{{ choice.taxi.name }}">
+<table>
+	<tbody>
+		<tr class="time">
+			<th>Time</th>
+			<td data-key="time">{{ choice.time }}</td>
+		</tr>
+		<tr class="driver">
+			<th>Driver</th>
+			<td data-key="driver">{{ choice.driver.firstname }} {{ choice.driver.lastname }}</td>
+		</tr>
+		<tr class="position">
+			<th>Position</th>
+			<td>
+				<span data-key="gps.latitude">{{ choice.latitude }}</span>, 
+				<span data-key="gps.longitude">{{ choice.longitude }}</span>
+			</td>
+		</tr>
+	</tbody>
+</table>
+</div>
+{% endfor %}
