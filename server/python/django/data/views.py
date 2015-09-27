@@ -7,10 +7,9 @@ from django.db.models import Max
 class MenuView(generic.list.ListView):
     # model = Position
     def get_queryset(self):
-        queryset = Position.objects.raw('select distinct * '
+        queryset = Position.objects.raw('select * '
 										+ 'from data_position a '
-										+ 'where time = (select max(b.time) from data_position b where b.taxi_id = a.taxi_id) '
-										+ 'group by taxi_id;')
+										+ 'where time = (select max(time) from data_position where taxi_id = a.taxi_id);')
         return queryset
 
 class DriverSelectionView(generic.list.ListView):
@@ -23,7 +22,6 @@ class DriverChangeView(generic.TemplateView):
     # model = Position
     template_name = "driver_change.html"
     result = "";
-    print "test"
     def get_context_data(self, **kwargs):
         try:
             taxi = self.kwargs['taxi']
