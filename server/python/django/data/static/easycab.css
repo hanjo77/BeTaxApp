@@ -101,6 +101,20 @@ a.btn {
 	color: #f7de94;
 }
 
+#accordion select {
+	background-color: #f8d360;
+    width: 100%;
+    color: #315aa6;
+    font-size: 1em;
+    font-family: verdana;
+}
+
+.displayFilter {
+	font-size: 2em;
+    width: 100%;
+    margin-bottom: .5em;
+}
+
 .ui-accordion-header-icon {
 	background: url(arrows-inactive.png) -24px 0;
 	background-repeat: no-repeat;

@@ -27,7 +27,7 @@ a img {
 }
 
 a.section:link, a.section:visited {
-    color: #fff;
+    color: #315aa6;
     text-decoration: none;
 }
 
@@ -502,9 +502,16 @@ a.button {
     padding: 2px 5px 3px 5px;
     font-size: 11px;
     text-align: left;
-    font-weight: bold;
-    background: #7CA0C7 url(../img/default-bg.gif) top left repeat-x;
-    color: #fff;
+    font-weight: bold; 
+    color: #315aa6;
+    background: #f7de94; /* Old browsers */
+    background: -moz-linear-gradient(top,  #f7de94 0%, #f8d360 100%); /* FF3.6+ */
+    background: -webkit-gradient(linear, left top, left bottom, color-stop(0%,#f7de94), color-stop(100%,#f8d360)); /* Chrome,Safari4+ */
+    background: -webkit-linear-gradient(top,  #f7de94 0%,#f8d360 100%); /* Chrome10+,Safari5.1+ */
+    background: -o-linear-gradient(top,  #f7de94 0%,#f8d360 100%); /* Opera 11.10+ */
+    background: -ms-linear-gradient(top,  #f7de94 0%,#f8d360 100%); /* IE10+ */
+    background: linear-gradient(to bottom,  #f7de94 0%,#f8d360 100%); /* W3C */
+    filter: progid:DXImageTransform.Microsoft.gradienta( startColorstr='#f7de94', endColorstr='#f8d360',GradientType=0 ); /* IE6-9 */
 }
 
 .module table {

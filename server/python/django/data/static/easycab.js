@@ -76,6 +76,43 @@ function refreshAccordion() {
 	});
 }
 
+function showAll() {
+	for (var key in markers) {
+		var $header = $("h3.car"+key);
+		$(".car"+key).show();
+		markers[key].setMap(map);
+	}
+}
+
+function showActive() {
+	for (var key in markers) {
+		var $header = $("h3.car"+key);
+		if ($header.hasClass("active")) {
+			$(".car"+key).show();
+			markers[key].setMap(map);
+		}
+		else {
+			$(".car"+key).hide();
+			markers[key].setMap(null);
+		}
+	}
+}
+
+function showInactive() {
+	for (var key in markers) {
+		var $header = $("h3.car"+key);
+		if ($header.hasClass("active")) {
+			$(".car"+key).hide();
+			markers[key].setMap(null);
+
+		}
+		else {
+			$(".car"+key).show();
+			markers[key].setMap(map);
+		}
+	}
+}
+
 function addMarker(lat, lng, info) {
 	//console.log(lat, lng, info);
 	var data = jQuery.parseJSON(info);
@@ -175,6 +212,28 @@ function addMarker(lat, lng, info) {
 		$('h3.car' + data.car).addClass("active");
 	}
 
+	$("*[data-key='driver']").each(function(index, object) {
+		if ($.trim($(object).html()) == "") {
+			$.ajax({
+		        url: "/drivers",
+		        success: function( data ) {
+		            $(object).html(data);
+		            $(".driver select").change(function(event) {
+		            	var oldId = $(event.target).parent().attr("data-id");
+		            	var id = $(event.target).val();
+		            	var driverName = event.target.options[event.target.selectedIndex].innerHTML;
+		            	if (id != "" && window.confirm("Wollen Sie wirklich den Fahrer auf " + driverName + " ändern?")) {	            		
+			            	var taxi = $(event.target).parent().parent().parent().parent().parent().prev().attr("data-key");
+			            	$.ajax({ url: "/driver_change/" + taxi + "/" + oldId + "/" + id });
+			            	$(event.target).parent().attr("data-id", id);
+			            	$(event.target).parent().html(driverName);
+		            	}
+		            });
+		        }
+		    });
+		}
+	});
+
 	if (timeouts[data.car]) {
 		window.clearTimeout(timeouts[data.car]);
 	}
@@ -269,7 +328,7 @@ $(document).ready(function() {
 		updateSize();
 	});
 	$.ajax({
-        url: "/data/menu",
+        url: "/menu",
         success: function( data ) {
             $('#accordion').html(data);
 			$("#accordion").accordion();
@@ -282,6 +341,9 @@ $(document).ready(function() {
 				}
 			});
 			refreshAccordion();
+			$(".displayFilter").change(function(event) {
+				eval($(event.target).val() + "()");
+			})
         }
     });
 });

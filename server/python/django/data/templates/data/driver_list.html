@@ -1,0 +1,6 @@
+<select>
+	<option value="">Unbekannter Fahrer</option>
+	{% for choice in object_list %}
+	<option value="{{ choice.id }}">{{ choice.firstname }} {{ choice.lastname }}</option>
+	{% endfor %}
+</select>

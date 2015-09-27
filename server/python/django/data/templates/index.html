@@ -15,6 +15,11 @@
 </head>
 <body>
 	<div id="menu">
+		<select class="displayFilter">
+			<option value="showAll">Alle anzeigen</option>
+			<option value="showActive">Aktive Fahrzeuge anzeigen</option>
+			<option value="showInactive">Inaktive Fahrzeuge anzeigen</option>
+		</select>
 		<div id="accordion">
 			{% for choice in object_list %}
 			<h3 class="car{{ choice.name }}">{{ choice.name }}</h3>'
