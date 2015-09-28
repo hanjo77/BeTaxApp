@@ -1,0 +1,3 @@
+[submodule "server/python"]
+	path = server/python
+	url = git://github.com/hanjo77/EasyCabApp-Server-Python.git
