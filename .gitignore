@@ -1,1 +1,3 @@
 server/maps/node_modules
+*.pyc
+*/cache
