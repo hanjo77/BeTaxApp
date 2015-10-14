@@ -2,3 +2,4 @@ server/maps/node_modules
 *.pyc
 */cache
 doc/~$$*
+*/migrations
