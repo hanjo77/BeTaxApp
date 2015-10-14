@@ -15,6 +15,7 @@ import socket
 import paho.mqtt.client as mqtt
 import gps
 import urllib2
+import dbus
 from lockfile import LockTimeout
 from tinkerforge.ip_connection import IPConnection
 from tinkerforge.bricklet_nfc_rfid import NFCRFID
@@ -43,11 +44,13 @@ class EasyCabListener():
     # Callback function for coordinates
     def cb_coordinates(self, data):
         driver_id = os.getenv('DRIVER_ID', '')
+        phone_mac_addr = os.getenv('PHONE_MAC_ADDR', '')
         if driver_id != '':
             coordinates = ('{'
                 '"time":"' + data.time + '",'
                 '"car":"' + socket.gethostname() + '",'
                 '"driver":"' + driver_id + '",'
+                '"phone":"' + phone_mac_addr + '",'
                 '"gps":{'
                     '"latitude":' + str(data.lat) + ','
                     '"longitude":' + str(data.lon) +
@@ -99,10 +102,23 @@ class EasyCabListener():
             call(["service", "easycabd", "restart"])
             pass
 
+
+    # Updated the mac address of the connected phone
+    def update_phone_mac_addr(self):
+        bus = dbus.SystemBus()
+        manager = dbus.Interface(bus.get_object('org.bluez', '/'), 'org.bluez.Manager')
+        adapterPath = manager.DefaultAdapter()
+        adapter = dbus.Interface(bus.get_object('org.bluez', adapterPath), 'org.bluez.Adapter')
+        for devicePath in adapter.ListDevices():
+            device = dbus.Interface(bus.get_object('org.bluez', devicePath),'org.bluez.Device')
+            deviceProperties = device.GetProperties()
+            os.environ["PHONE_MAC_ADDR"] = deviceProperties["Address"]
+
     # Checks internet connection - returns true when connected, false when offline
     def internet_on(self):
         try:
             response = urllib2.urlopen('http://' + SERVER_HOSTNAME)
+            self.update_phone_mac_addr()
             return True
 
         except urllib2.URLError as err:
