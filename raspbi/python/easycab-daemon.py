@@ -74,7 +74,7 @@ class EasyCabListener():
             # Set environment variable DRIVER_ID to NFC tag ID
             if not hasattr(os.environ, "DRIVER_ID") or os.environ["DRIVER_ID"] != id:
                 os.environ["DRIVER_ID"] = id
-                print(id + " got connected\n")
+                # print(id + " got connected\n")
             # GPS does not want to talk with us, often happens on boot - will restart myself (the daemon) and be back in a minute...
             if (time.time() - self.update_time) > GPS_TIMEOUT:
                 print "Restart GPSD\n"
@@ -105,14 +105,17 @@ class EasyCabListener():
 
     # Updated the mac address of the connected phone
     def update_phone_mac_addr(self):
-        bus = dbus.SystemBus()
-        manager = dbus.Interface(bus.get_object('org.bluez', '/'), 'org.bluez.Manager')
-        adapterPath = manager.DefaultAdapter()
-        adapter = dbus.Interface(bus.get_object('org.bluez', adapterPath), 'org.bluez.Adapter')
-        for devicePath in adapter.ListDevices():
-            device = dbus.Interface(bus.get_object('org.bluez', devicePath),'org.bluez.Device')
-            deviceProperties = device.GetProperties()
-            os.environ["PHONE_MAC_ADDR"] = deviceProperties["Address"]
+        try:
+            bus = dbus.SystemBus()
+            manager = dbus.Interface(bus.get_object('org.bluez', '/'), 'org.bluez.Manager')
+            adapterPath = manager.DefaultAdapter()
+            adapter = dbus.Interface(bus.get_object('org.bluez', adapterPath), 'org.bluez.Adapter')
+            for devicePath in adapter.ListDevices():
+                device = dbus.Interface(bus.get_object('org.bluez', devicePath),'org.bluez.Device')
+                deviceProperties = device.GetProperties()
+                os.environ["PHONE_MAC_ADDR"] = deviceProperties["Address"]
+        except:
+             call(["service", "easycabd", "restart"])           
 
     # Checks internet connection - returns true when connected, false when offline
     def internet_on(self):
