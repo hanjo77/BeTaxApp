@@ -17,6 +17,7 @@ import gps
 import urllib2
 import dbus
 import json
+import httplib
 from lockfile import LockTimeout
 from tinkerforge.ip_connection import IPConnection
 from tinkerforge.bricklet_nfc_rfid import NFCRFID
@@ -25,12 +26,12 @@ from subprocess import call
 from datetime import datetime
 
 # Configuration constants
-SERVER_HOSTNAME = "46.101.17.239"
-MQTT_PORT = 1883
+config = {}
+with open('/usr/local/python/config-client.json') as data_file:    
+    config = json.load(data_file)
+
 NFC_BRICKLET_ID = 246
-GPS_TIMEOUT = 10 # Has to be larger than GPS_INTERVAL
-GPS_INTERVAL = 5
-tag_type = 0
+NFC_TAG_TYPE = 0
 
 # Constructor
 class EasyCabListener():
@@ -49,8 +50,9 @@ class EasyCabListener():
         try:
             os.remove("/root/session_id")
         except:
-            print("session_id not found")
+            pass
 
+    # Handler used to serialize datetime objects
     def date_handler(self, obj):
         return obj.isoformat() if hasattr(obj, 'isoformat') else obj
 
@@ -61,11 +63,25 @@ class EasyCabListener():
         session_id = 0
 
         try:
-            file = open('/root/session_id', 'r')
-            os.environ["SESSION_ID"] = file.read()
-            session_id = int(os.environ["SESSION_ID"])
+            session = json.load(urllib2.urlopen(
+                'http://' + 
+                config['SERVER_HOSTNAME'] + 
+                '/data/session/' + 
+                socket.gethostname() + 
+                '/' + 
+                driver_id + 
+                '/' + 
+                phone_mac_addr + 
+                "/"
+                )
+            )
+            session_id = session['session_id']
+            os.environ['SESSION_ID'] = str(session_id)
+            print session_id
         except Exception, e:
-            call(["/root/check-network.sh", ">", "/dev/null"])
+            # call(["/root/check-network.sh", ">", "/dev/null"])
+            print "3rr0r: " + str(e)
+            pass
 
         if driver_id != '':
             if session_id <= 0:
@@ -74,7 +90,6 @@ class EasyCabListener():
                     'driver': driver_id,
                     'phone': phone_mac_addr
                 })
-                print(json_data + " sent to topic 'session'\n")
                 self.mqtt_publish("session", json_data)
             else:
                 json_data = json.dumps({
@@ -88,16 +103,15 @@ class EasyCabListener():
                         'longitude': str(data.lon)
                     }
                 }, default=self.date_handler)
-                print(json_data + " sent to topic 'presence'\n")
                 self.mqtt_publish("presence", json_data)
 
     # Callback function for RFID reader state changed callback
     def cb_state_changed(self, state, idle, nfc):
         # Cycle through all types"
         if idle:
-            global tag_type
-            tag_type = (tag_type + 1) % 3
-            nfc.request_tag_id(tag_type)
+            global NFC_TAG_TYPE
+            NFC_TAG_TYPE = (NFC_TAG_TYPE + 1) % 3
+            nfc.request_tag_id(NFC_TAG_TYPE)
 
         # We found a tag, so we can start tracking
         if state == nfc.STATE_REQUEST_TAG_ID_READY:
@@ -108,15 +122,16 @@ class EasyCabListener():
                 os.environ["DRIVER_ID"] = id
                 # print(id + " got connected\n")
             # GPS does not want to talk with us, often happens on boot - will restart myself (the daemon) and be back in a minute...
-            if (time.time() - self.update_time) > GPS_TIMEOUT:
-                print "Restart GPSD\n"
+            if (time.time() - self.update_time) > config['GPS_TIMEOUT']:
                 call(["service", "easycabd", "restart"])
     
+    # Wrapper to publish messages over MQTT
     def mqtt_publish(self, topic, message):
         if not hasattr(self.client, 'publish'):
             self.client = mqtt.Client()
-            self.client.connect(SERVER_HOSTNAME, MQTT_PORT, keepalive=100)
+            self.client.connect(config['SERVER_HOSTNAME'], config['MQTT_PORT'], keepalive=100)
         self.client.publish(topic, message, qos=0, retain=True)
+        print message + " published to " + topic
 
     # Starts GPS listener
     def start_gps(self):
@@ -140,17 +155,16 @@ class EasyCabListener():
                 deviceProperties = device.GetProperties()
                 os.environ["PHONE_MAC_ADDR"] = deviceProperties["Address"]
         except Exception, e:
-            print "phone mac not retrieved: " + str(e)   
+            pass
 
     # Checks internet connection - returns true when connected, false when offline
     def internet_on(self):
         try:
-            response = urllib2.urlopen('http://' + SERVER_HOSTNAME + "/data")
+            response = urllib2.urlopen('http://' + config['SERVER_HOSTNAME'] + "/data")
             self.update_phone_mac_addr()
             return True
 
         except urllib2.URLError as err:
-            print err
             return False
 
     # Print incoming enumeration
@@ -192,13 +206,13 @@ class EasyCabListener():
 
                 if report:
                     if hasattr(report, 'lat'):
-                        if round(time.time() - self.update_time, 0) >= GPS_INTERVAL:
+                        if round(time.time() - self.update_time, 0) >= config['GPS_INTERVAL']:
                             self.update_time = time.time()
                             self.cb_coordinates(report)
                         valid = True
 
                 # GPS does not want to talk with us, often happens on boot - will restart myself (the daemon) and be back in a minute...
-                if (time.time() - self.update_time) > GPS_TIMEOUT:
+                if (time.time() - self.update_time) > config['GPS_TIMEOUT']:
                     self.update_time = time.time()
                     call(["service", "easycabd", "restart"])
                     print "Restart GPSD"
