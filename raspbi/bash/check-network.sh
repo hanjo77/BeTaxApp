@@ -22,3 +22,5 @@ if [ -z "${NETWORK}" ]
 then
     ifdown bnep0 && ifup bnep0
 fi
+
+python /usr/local/python/mqtt-easycab.py &
