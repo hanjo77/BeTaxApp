@@ -47,10 +47,6 @@ class EasyCabListener():
         self.online = False
         self.subscribed = False
         self.client = []
-        try:
-            os.remove("/root/session_id")
-        except:
-            pass
 
     # Handler used to serialize datetime objects
     def date_handler(self, obj):
@@ -60,8 +56,21 @@ class EasyCabListener():
     def cb_coordinates(self, data):
         driver_id = os.getenv('DRIVER_ID', '')
         phone_mac_addr = os.getenv('PHONE_MAC_ADDR', '')
-        session_id = 0
+        session_id = self.get_session_id(driver_id, phone_mac_addr)
 
+        if driver_id != '' and session_id > 0:
+            json_data = json.dumps({
+                'session': session_id,
+                'time': datetime.now(),
+                'gps':{
+                    'latitude': str(data.lat),
+                    'longitude': str(data.lon)
+                }
+            }, default=self.date_handler)
+            self.mqtt_publish("presence", json_data)
+
+    def get_session_id(self, driver_id, phone_mac_addr):
+        session_id = 0
         try:
             session = json.load(urllib2.urlopen(
                 'http://' + 
@@ -79,31 +88,9 @@ class EasyCabListener():
             os.environ['SESSION_ID'] = str(session_id)
             print session_id
         except Exception, e:
-            # call(["/root/check-network.sh", ">", "/dev/null"])
-            print "3rr0r: " + str(e)
             pass
+        return session_id
 
-        if driver_id != '':
-            if session_id <= 0:
-                json_data = json.dumps({
-                    'car': socket.gethostname(),
-                    'driver': driver_id,
-                    'phone': phone_mac_addr
-                })
-                self.mqtt_publish("session", json_data)
-            else:
-                json_data = json.dumps({
-                    'session': session_id,
-                    'time': datetime.now(),
-                    'car': socket.gethostname(),
-                    'driver': driver_id,
-                    'phone': phone_mac_addr,
-                    'gps':{
-                        'latitude': str(data.lat),
-                        'longitude': str(data.lon)
-                    }
-                }, default=self.date_handler)
-                self.mqtt_publish("presence", json_data)
 
     # Callback function for RFID reader state changed callback
     def cb_state_changed(self, state, idle, nfc):
@@ -164,7 +151,7 @@ class EasyCabListener():
             self.update_phone_mac_addr()
             return True
 
-        except urllib2.URLError as err:
+        except Exception, e:
             return False
 
     # Print incoming enumeration
