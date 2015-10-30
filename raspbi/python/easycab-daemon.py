@@ -76,12 +76,9 @@ class EasyCabListener():
                 'http://' + 
                 config['SERVER_HOSTNAME'] + 
                 '/data/session/' + 
-                socket.gethostname() + 
-                '/' + 
-                driver_id + 
-                '/' + 
-                phone_mac_addr + 
-                "/"
+                socket.gethostname() + '/' + 
+                driver_id + '/' + 
+                phone_mac_addr + "/"
                 )
             )
             session_id = session['session_id']
@@ -107,7 +104,6 @@ class EasyCabListener():
             # Set environment variable DRIVER_ID to NFC tag ID
             if not hasattr(os.environ, "DRIVER_ID") or os.environ["DRIVER_ID"] != id:
                 os.environ["DRIVER_ID"] = id
-                # print(id + " got connected\n")
             # GPS does not want to talk with us, often happens on boot - will restart myself (the daemon) and be back in a minute...
             if (time.time() - self.update_time) > config['GPS_TIMEOUT']:
                 call(["service", "easycabd", "restart"])
@@ -207,7 +203,6 @@ class EasyCabListener():
             except KeyError:
                 print KeyError
                 call(["service", "easycabd", "restart"])
-                pass
 
             except KeyboardInterrupt:
                 quit()
@@ -215,6 +210,9 @@ class EasyCabListener():
             except StopIteration:
                 print "GPSD Stopped " + str(self.update_time)
                 call(["service", "easycabd", "restart"])
+
+            except Exception, e:
+                print Exception
 
 easyCabListener = EasyCabListener()
 daemon_runner = runner.DaemonRunner(easyCabListener)

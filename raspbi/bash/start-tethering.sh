@@ -9,4 +9,4 @@ sleep 10
 # Windows Phone
 # pand -c 0C:E7:25:54:98:2C -role PANU --persist 30;
 # Auto
-pand --role PANU --search --nosdp --persist 30;
+pand --role PANU --search --nosdp --persist 10;
