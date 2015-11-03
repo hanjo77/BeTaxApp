@@ -219,7 +219,7 @@ class EasyCabListener():
                     config = json.load(urllib2.urlopen(url))
                 except:
                     print url + ' call failed'
-            # Read GPS report and send it if we found a 'lat' key
+                # Read GPS report and send it if we found a 'lat' key
                 report = self.session.next()
                 valid = False;
 
