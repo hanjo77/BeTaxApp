@@ -171,7 +171,7 @@ class EasyCabListener():
     # Checks internet connection - returns true when connected, false when offline
     def internet_on(self):
         try:
-            response = urllib2.urlopen('http://' + SERVER_HOSTNAME + '/data')
+            response = urllib2.urlopen('http://' + SERVER_HOSTNAME)
             self.update_phone_mac_addr()
             return True
 
