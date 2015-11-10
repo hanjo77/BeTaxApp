@@ -71,6 +71,7 @@ class EasyCabListener():
             }, default=self.date_handler)
             self.mqtt_publish('presence', json_data)
 
+    # Gets session ID from HTTP request
     def get_session_id(self, taxi_token, driver_token, phone_mac_addr):
         session_id = 0
         url = ('http://' + 
@@ -160,7 +161,7 @@ class EasyCabListener():
                         phone = json.load(urllib2.urlopen(url))
                         if len(phone) > 0:
                             os.environ['PHONE_MAC_ADDR'] = deviceProperties['Address']
-                            print 'PHONE_MAC_ADDR = '+deviceProperties['Address']
+                            print 'PHONE_MAC_ADDR = ' + deviceProperties['Address']
                     except:
                         print url + ' call failed'
 
