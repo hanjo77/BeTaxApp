@@ -24,6 +24,7 @@ from tinkerforge.bricklet_nfc_rfid import NFCRFID
 from daemon import runner
 from subprocess import call
 from datetime import datetime
+from uuid import getnode as get_mac
 
 # Configuration constants
 config = {}
@@ -87,9 +88,11 @@ class EasyCabListener():
             if (os.getenv('SESSION_ID', '') != str(session_id)):
                 os.environ['SESSION_ID'] = str(session_id)
                 print 'SESSION_ID = '+str(session_id)
-        except Exception, e:
+        except Exception as e:
             if taxi_token != '':
                 print (url + ' call failed')
+                z = e
+                print z
             pass
         return session_id
 
@@ -119,8 +122,10 @@ class EasyCabListener():
                 if os.getenv(token_type+'_TOKEN', '') != id:
                     os.environ[token_type+'_TOKEN'] = id
                     print token_type+'_TOKEN = '+id
-            except Exception,e:
+            except Exception as e:
                 print url + ' call failed'
+                z = e
+                print z
     
     # Wrapper to publish messages over MQTT
     def mqtt_publish(self, topic, message):
@@ -140,33 +145,23 @@ class EasyCabListener():
             call(['service', 'easycabd', 'restart'])
             pass
 
-    # Updated the mac address of the connected phone
+    # Updates the mac address of the connected phone
     def update_phone_mac_addr(self):
         try:
-            bus = dbus.SystemBus()
-            manager = dbus.Interface(bus.get_object('org.bluez', '/'), 'org.bluez.Manager')
-            adapterPath = manager.DefaultAdapter()
-            adapter = dbus.Interface(bus.get_object('org.bluez', adapterPath), 'org.bluez.Adapter')
-            for devicePath in adapter.ListDevices():
-                device = dbus.Interface(bus.get_object('org.bluez', devicePath),'org.bluez.Device')
-                deviceProperties = device.GetProperties()
-
-                if (os.getenv('PHONE_MAC_ADDR', '') != deviceProperties['Address']):
-                    url = ('http://' + 
-                        SERVER_HOSTNAME + 
-                        '/data/validate_phone/' + 
-                        deviceProperties['Address'] + '/'
-                        );
-                    try:
-                        phone = json.load(urllib2.urlopen(url))
-                        if len(phone) > 0:
-                            os.environ['PHONE_MAC_ADDR'] = deviceProperties['Address']
-                            print 'PHONE_MAC_ADDR = ' + deviceProperties['Address']
-                    except:
-                        print url + ' call failed'
-
-        except Exception:
+            mac_addr = ':'.join(("%012X" % get_mac())[i:i+2] for i in range(0, 12, 2))
+            if (os.getenv('PHONE_MAC_ADDR', '') != mac_addr):
+                url = ('http://' + 
+                    SERVER_HOSTNAME + 
+                    '/data/validate_phone/' + 
+                    mac_addr + '/'
+                    );
+                phone = json.load(urllib2.urlopen(url))
+                if len(phone) > 0:
+                    os.environ['PHONE_MAC_ADDR'] = mac_addr
+        except Exception as e:
             print Exception
+            z = e
+            print z
             pass
 
     # Checks internet connection - returns true when connected, false when offline
@@ -209,7 +204,6 @@ class EasyCabListener():
             try:
                 if not self.internet_on():
                     print 'offline'
-                    call(['/root/check-network.sh', '>', '/dev/null'])
                     time.sleep(5)
                 self.update_phone_mac_addr()
                 url = ('http://' + 
@@ -218,8 +212,10 @@ class EasyCabListener():
                     );
                 try:
                     config = json.load(urllib2.urlopen(url))
-                except:
+                except Exception:
                     print url + ' call failed'
+                    # z = e
+                    # print z
                 # Read GPS report and send it if we found a 'lat' key
                 report = self.session.next()
                 valid = False;
