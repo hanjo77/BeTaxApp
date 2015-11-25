@@ -204,6 +204,7 @@ class EasyCabListener():
             try:
                 if not self.internet_on():
                     print 'offline'
+                    self.client = []
                     time.sleep(5)
                 self.update_phone_mac_addr()
                 url = ('http://' + 
