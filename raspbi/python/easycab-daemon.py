@@ -34,10 +34,10 @@ MQTT_PORT = 1883
 NFC_BRICKLET_ID = 246
 NFC_TAG_TYPE = 0
 
-# Constructor
 class EasyCabListener():
-    # Initializes daemon
+    """ Constructor """
     def __init__(self):
+        """ Initializes daemon """
         self.stdin_path = '/dev/null'
         self.stdout_path = '/var/log/easycabd/easycabd.log'
         self.stderr_path = '/var/log/easycabd/easycabd-error.log'
@@ -49,12 +49,12 @@ class EasyCabListener():
         self.subscribed = False
         self.client = []
 
-    # Handler used to serialize datetime objects
     def date_handler(self, obj):
+        """ Handler used to serialize datetime objects """
         return obj.isoformat() if hasattr(obj, 'isoformat') else obj
 
-    # Callback function for coordinates
     def cb_coordinates(self, data):
+        """ Callback function for coordinates """
         taxi_token = os.getenv('TAXI_TOKEN', '')
         driver_token = os.getenv('DRIVER_TOKEN', '')
         phone_mac_addr = os.getenv('PHONE_MAC_ADDR', '')
@@ -72,8 +72,8 @@ class EasyCabListener():
             }, default=self.date_handler)
             self.mqtt_publish('presence', json_data)
 
-    # Gets session ID from HTTP request
     def get_session_id(self, taxi_token, driver_token, phone_mac_addr):
+        """ Gets session ID from HTTP request """
         session_id = 0
         url = ('http://' + 
             SERVER_HOSTNAME + 
@@ -97,8 +97,8 @@ class EasyCabListener():
         return session_id
 
 
-    # Callback function for RFID reader state changed callback
     def cb_state_changed(self, state, idle, nfc):
+        """ Callback function for RFID reader state changed callback """
         # Cycle through all types'
         if idle:
             global NFC_TAG_TYPE
@@ -127,16 +127,16 @@ class EasyCabListener():
                 z = e
                 print z
     
-    # Wrapper to publish messages over MQTT
     def mqtt_publish(self, topic, message):
+        """ Wrapper to publish messages over MQTT """
         if not hasattr(self.client, 'publish'):
             self.client = mqtt.Client()
             self.client.connect(SERVER_HOSTNAME, MQTT_PORT, keepalive=100)
         self.client.publish(topic, message, qos=0, retain=True)
         print message + ' published to ' + topic
 
-    # Starts GPS listener
     def start_gps(self):
+        """ Starts GPS listener """
         try:
             self.session = gps.gps('localhost', '2947')
             self.session.stream(gps.WATCH_ENABLE | gps.WATCH_NEWSTYLE)
@@ -145,8 +145,8 @@ class EasyCabListener():
             call(['service', 'easycabd', 'restart'])
             pass
 
-    # Updates the mac address of the connected phone
     def update_phone_mac_addr(self):
+        """ Updates the mac address of the connected phone """
         try:
             mac_addr = ':'.join(("%012X" % get_mac())[i:i+2] for i in range(0, 12, 2))
             if (os.getenv('PHONE_MAC_ADDR', '') != mac_addr):
@@ -164,8 +164,8 @@ class EasyCabListener():
             print z
             pass
 
-    # Checks internet connection - returns true when connected, false when offline
     def internet_on(self):
+        """ Checks internet connection - returns true when connected, false when offline """
         try:
             response = urllib2.urlopen('http://' + SERVER_HOSTNAME)
             self.update_phone_mac_addr()
@@ -174,13 +174,13 @@ class EasyCabListener():
         except Exception:
             return False
 
-    # Print incoming enumeration
     def cb_enumerate(self, uid, connected_uid, position, hardware_version, firmware_version, device_identifier, enumeration_type):
+        """ Print incoming enumeration """
         if device_identifier == NFC_BRICKLET_ID:
             self.nfc_uid = uid
 
-    # Run, daemon, run - Go for the main method
     def run(self):
+        """ The main method """
         # Start GPS listener
         self.start_gps()
 
