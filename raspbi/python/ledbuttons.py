@@ -12,7 +12,7 @@ NETWORK_GPIO = 27
 GPS_GPIO = 22
 CAR_GPIO = 23
 DRIVER_GPIO = 24
-BUTTON_GPIO = 21
+BUTTON_GPIO = 25
 BLINK_INTERVAL = 0.5
 RESET_INTERVAL = 2
 PHONE_KEY = 'phone'
@@ -59,6 +59,9 @@ class LedButtonHandler():
     def set_led_blink(self, pin, value):
         self.led_list[pin].blink = value
 
+    def get_led_blink(self, pin):
+        return self.led_list[pin].blink
+
     def set_led_on(self, pin):
         GPIO.output(pin, GPIO.HIGH)
 
@@ -80,14 +83,14 @@ class LedButtonHandler():
                 self.since_button_pressed = -1
                 for led in self.led_list.itervalues():
                     led.blink = not led.blink
-                print 'reset'
+#                print 'reset'
             else:
                 self.since_button_pressed = time.time()
-                print 'to long since double-click'
+#                print 'to long since double-click'
         else:
             self.button_pressed = True
             self.since_button_pressed = time.time()
-            print 'putton pressed'
+#            print 'putton pressed'
 
     def change_tracking(self):
         """Changes tracking"""
@@ -95,7 +98,7 @@ class LedButtonHandler():
         self.is_tracking = not self.is_tracking
         self.since_button_pressed = -1
         GPIO.output(self.gpio_list, self.is_tracking)
-        print 'tracking changed'
+#        print 'tracking changed'
 
 
 class LedButtonsListener(threading.Thread):
@@ -105,10 +108,10 @@ class LedButtonsListener(threading.Thread):
         self.handler = handler
 
     def run(self):
+        """main method"""
         try:
-            starttime = oldtime = time.time()
-#            while True:
-            while (time.time() - starttime) < 20:
+            oldtime = time.time()
+            while True:
                 if GPIO.event_detected(BUTTON_GPIO):
                     self.handler.is_button_pressed()
                 if (self.handler.since_button_pressed > 0 and
@@ -120,11 +123,9 @@ class LedButtonsListener(threading.Thread):
                             if led.blink:
                                 GPIO.output(led.gpio, not GPIO.input(led.gpio))
                         oldtime = time.time()
+        except KeyboardInterrupt:
+            quit()
         except Exception:
             print Exception
         finally:
             GPIO.cleanup()
-
-eclistener = LedButtonHandler()
-test = LedButtonsListener(eclistener)
-test.start()
