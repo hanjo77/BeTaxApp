@@ -195,6 +195,7 @@ class EasyCabListener():
         """ The main method """
         # Start LED and button listener
         ledbutton_thread = ledbuttons.LedButtonsListener(self.ledbutton_handler)
+        ledbutton_thread.daemon = True
         ledbutton_thread.start()
 
         # Start GPS listener
@@ -234,15 +235,16 @@ class EasyCabListener():
                     # z = e
                     # print z
                 # Read GPS report and send it if we found a 'lat' key
-                report = self.session.next()
-                #valid = False;
+                if self.ledbutton_handler.is_tracking:
+                    report = self.session.next()
+                    #valid = False;
 
-                if report:
-                    if hasattr(report, 'lat'):
-                        if round(time.time() - self.update_time, 0) >= config['position_update_interval']:
-                            self.update_time = time.time()
-                            self.cb_coordinates(report)
-                       # valid = True
+                    if report:
+                        if hasattr(report, 'lat'):
+                            if round(time.time() - self.update_time, 0) >= config['position_update_interval']:
+                                self.update_time = time.time()
+                                self.cb_coordinates(report)
+                           # valid = True
 
                 # GPS does not want to talk with us, often happens on boot - will restart myself (the daemon) and be back in a minute...
                 if (time.time() - self.update_time) > (config['position_update_interval']*3):
@@ -252,13 +254,16 @@ class EasyCabListener():
 
             except KeyError:
                 print KeyError
+                ledbutton_thread.exit()
                 call(['service', 'easycabd', 'restart'])
 
             except KeyboardInterrupt:
+                ledbutton_thread.exit()
                 quit()
 
             except StopIteration:
                 print 'GPSD Stopped ' + str(self.update_time)
+                ledbutton_thread.exit()
                 call(['service', 'easycabd', 'restart'])
 
             except Exception:
