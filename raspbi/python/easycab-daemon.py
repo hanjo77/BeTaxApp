@@ -36,6 +36,8 @@ NFC_BRICKLET_ID = 246
 NFC_TAG_TYPE = 0
 TOKEN_TYPE_DRIVER = 'DRIVER'
 TOKEN_TYPE_TAXI = 'TAXI'
+CONFIG_UPDATE_INTERVAL = 60
+
 
 class EasyCabListener():
     """ Constructor """
@@ -53,10 +55,11 @@ class EasyCabListener():
         self.client = []
         self.driver_token = ''
         self.taxi_token = ''
-        self.phone_mac_addr= ''
+        self.phone_mac_addr = ''
         self.session_id = 0
         self.ledbutton_handler = ledbuttons.LedButtonHandler()
-
+        self.config_time = time.time()
+        self.config = []
 
 
     def date_handler(self, obj):
@@ -102,7 +105,6 @@ class EasyCabListener():
                 print z
             pass
         return session_id
-
 
     def cb_state_changed(self, state, idle, nfc):
         """ Callback function for RFID reader state changed callback """
@@ -182,7 +184,7 @@ class EasyCabListener():
         try:
             response = urllib2.urlopen('http://' + SERVER_HOSTNAME)
             self.update_phone_mac_addr()
-            if self.ledbutton_handler.get_led_blink(ledbuttons.NETWORK_KEY):
+            if self.ledbutton_handler.get_led_blink():
                 self.ledbutton_handler.set_led_blink(ledbuttons.NETWORK_KEY, False)
             return True
 
@@ -194,6 +196,21 @@ class EasyCabListener():
         """ Print incoming enumeration """
         if device_identifier == NFC_BRICKLET_ID:
             self.nfc_uid = uid
+
+    def update_config(self):
+        self.get_session_id(self.taxi_token, self.driver_token, self.phone_mac_addr)
+        self.config_time = time.time()
+        self.update_phone_mac_addr()
+        url = ('http://' +
+                SERVER_HOSTNAME +
+                '/data/app_config/'
+                );
+        try:
+            self.config = json.load(urllib2.urlopen(url))
+        except Exception:
+            print url + ' call failed'
+            # z = e
+            # print z
 
     def run(self):
         """ The main method """
@@ -227,31 +244,24 @@ class EasyCabListener():
                     print 'offline'
                     self.client = []
                     time.sleep(5)
-                self.update_phone_mac_addr()
-                url = ('http://' + 
-                    SERVER_HOSTNAME + 
-                    '/data/app_config/'
-                    );
-                try:
-                    config = json.load(urllib2.urlopen(url))
-                except Exception:
-                    print url + ' call failed'
-                    # z = e
-                    # print z
+                if (time.time() - self.config_time) >= CONFIG_UPDATE_INTERVAL:
+                    self.update_config()
                 # Read GPS report and send it if we found a 'lat' key
                 if self.ledbutton_handler.is_tracking:
                     report = self.session.next()
                     #valid = False;
 
                     if report:
+                        # if self.ledbutton_handler.get_led_blink(ledbuttons.GPS_KEY):
                         if hasattr(report, 'lat'):
-                            if round(time.time() - self.update_time, 0) >= config['position_update_interval']:
+                            self.ledbutton_handler.set_led_blink(ledbuttons.GPS_KEY, False)
+                            if round(time.time() - self.update_time, 0) >= self.config['position_update_interval']:
                                 self.update_time = time.time()
                                 self.cb_coordinates(report)
                            # valid = True
 
                 # GPS does not want to talk with us, often happens on boot - will restart myself (the daemon) and be back in a minute...
-                if (time.time() - self.update_time) > (config['position_update_interval']*3):
+                if (time.time() - self.update_time) > (self.config['position_update_interval']*3):
                     self.update_time = time.time()
                     call(['service', 'easycabd', 'restart'])
                     print 'Restart GPSD'
@@ -269,6 +279,7 @@ class EasyCabListener():
 
             except Exception:
                 print Exception
+
 
 easyCabListener = EasyCabListener()
 daemon_runner = runner.DaemonRunner(easyCabListener)
