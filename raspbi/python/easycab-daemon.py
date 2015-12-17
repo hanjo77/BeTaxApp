@@ -48,6 +48,9 @@ class EasyCabListener():
         self.online = False
         self.subscribed = False
         self.client = []
+        self.driver_token = ''
+        self.taxi_token = ''
+        self.phone_mac_addr= ''
 
     def date_handler(self, obj):
         """ Handler used to serialize datetime objects """
