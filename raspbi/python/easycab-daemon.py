@@ -33,6 +33,8 @@ SERVER_HOSTNAME = '46.101.17.239'
 MQTT_PORT = 1883
 NFC_BRICKLET_ID = 246
 NFC_TAG_TYPE = 0
+TOKEN_TYPE_DRIVER = 'DRIVER'
+TOKEN_TYPE_TAXI = 'TAXI'
 
 class EasyCabListener():
     """ Constructor """
@@ -51,6 +53,8 @@ class EasyCabListener():
         self.driver_token = ''
         self.taxi_token = ''
         self.phone_mac_addr= ''
+        self.session_id = 0
+
 
     def date_handler(self, obj):
         """ Handler used to serialize datetime objects """
@@ -58,15 +62,12 @@ class EasyCabListener():
 
     def cb_coordinates(self, data):
         """ Callback function for coordinates """
-        taxi_token = os.getenv('TAXI_TOKEN', '')
-        driver_token = os.getenv('DRIVER_TOKEN', '')
-        phone_mac_addr = os.getenv('PHONE_MAC_ADDR', '')
-        session_id = self.get_session_id(taxi_token, driver_token, phone_mac_addr)
+        #session_id = self.get_session_id(self.taxi_token, self.driver_token, self.phone_mac_addr)
 
-        if (taxi_token != '' and 
-            session_id > 0):
+        if (self.taxi_token != '' and
+            self.session_id > 0):
             json_data = json.dumps({
-                'session': session_id,
+                'session': self.session_id,
                 'time': datetime.now(),
                 'gps':{
                     'latitude': str(data.lat),
@@ -88,8 +89,8 @@ class EasyCabListener():
         try:
             session = json.load(urllib2.urlopen(url))
             session_id = session['session_id']
-            if (os.getenv('SESSION_ID', '') != str(session_id)):
-                os.environ['SESSION_ID'] = str(session_id)
+            if (self.session_id != session_id):
+                self.session_id = session_id
                 print 'SESSION_ID = '+str(session_id)
         except Exception as e:
             if taxi_token != '':
@@ -122,8 +123,11 @@ class EasyCabListener():
             try:
                 token = json.load(urllib2.urlopen(url))
                 token_type = token['type'].upper()
-                if os.getenv(token_type+'_TOKEN', '') != id:
-                    os.environ[token_type+'_TOKEN'] = id
+                if token_type == TOKEN_TYPE_DRIVER and self.driver_token != id:
+                    self.driver_token = id
+                    print token_type+'_TOKEN = '+id
+                elif token_type == TOKEN_TYPE_TAXI and self.taxi_token != id:
+                    self.taxi_token = id
                     print token_type+'_TOKEN = '+id
             except Exception as e:
                 print url + ' call failed'
@@ -152,7 +156,7 @@ class EasyCabListener():
         """ Updates the mac address of the connected phone """
         try:
             mac_addr = ':'.join(("%012X" % get_mac())[i:i+2] for i in range(0, 12, 2))
-            if (os.getenv('PHONE_MAC_ADDR', '') != mac_addr):
+            if (self.phone_mac_addr != mac_addr):
                 url = ('http://' + 
                     SERVER_HOSTNAME + 
                     '/data/validate_phone/' + 
@@ -160,7 +164,7 @@ class EasyCabListener():
                     );
                 phone = json.load(urllib2.urlopen(url))
                 if len(phone) > 0:
-                    os.environ['PHONE_MAC_ADDR'] = mac_addr
+                    self.phone_mac_addr = mac_addr
         except Exception as e:
             print Exception
             z = e
