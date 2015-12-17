@@ -18,7 +18,7 @@ RESET_INTERVAL = 2
 PHONE_KEY = 'phone'
 NETWORK_KEY = 'network'
 GPS_KEY = 'gps'
-CAR_KEY = 'car'
+TAXI_KEY = 'car'
 DRIVER_KEY = 'driver'
 
 
@@ -35,7 +35,7 @@ class LedButtonHandler():
     led_list = {PHONE_KEY: Led(PHONE_GPIO),
                 NETWORK_KEY: Led(NETWORK_GPIO),
                 GPS_KEY: Led(GPS_GPIO),
-                CAR_KEY: Led(CAR_GPIO),
+                TAXI_KEY: Led(CAR_GPIO),
                 DRIVER_KEY: Led(DRIVER_GPIO)}
     is_tracking = True
 

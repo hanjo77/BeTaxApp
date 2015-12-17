@@ -18,6 +18,7 @@ import urllib2
 import dbus
 import json
 import httplib
+import ledbuttons
 from lockfile import LockTimeout
 from tinkerforge.ip_connection import IPConnection
 from tinkerforge.bricklet_nfc_rfid import NFCRFID
@@ -54,6 +55,8 @@ class EasyCabListener():
         self.taxi_token = ''
         self.phone_mac_addr= ''
         self.session_id = 0
+        self.ledbutton_handler = ledbuttons.LedButtonHandler()
+
 
 
     def date_handler(self, obj):
@@ -89,7 +92,7 @@ class EasyCabListener():
         try:
             session = json.load(urllib2.urlopen(url))
             session_id = session['session_id']
-            if (self.session_id != session_id):
+            if self.session_id != session_id:
                 self.session_id = session_id
                 print 'SESSION_ID = '+str(session_id)
         except Exception as e:
@@ -125,9 +128,11 @@ class EasyCabListener():
                 token_type = token['type'].upper()
                 if token_type == TOKEN_TYPE_DRIVER and self.driver_token != id:
                     self.driver_token = id
+                    self.ledbutton_handler.set_led_blink(ledbuttons.DRIVER_KEY, False)
                     print token_type+'_TOKEN = '+id
                 elif token_type == TOKEN_TYPE_TAXI and self.taxi_token != id:
                     self.taxi_token = id
+                    self.ledbutton_handler.set_led_blink(ledbuttons.TAXI_KEY, False)
                     print token_type+'_TOKEN = '+id
             except Exception as e:
                 print url + ' call failed'
@@ -188,6 +193,10 @@ class EasyCabListener():
 
     def run(self):
         """ The main method """
+        # Start LED and button listener
+        ledbutton_thread = ledbuttons.LedButtonsListener(self.ledbutton_handler)
+        ledbutton_thread.start()
+
         # Start GPS listener
         self.start_gps()
 
@@ -226,14 +235,14 @@ class EasyCabListener():
                     # print z
                 # Read GPS report and send it if we found a 'lat' key
                 report = self.session.next()
-                valid = False;
+                #valid = False;
 
                 if report:
                     if hasattr(report, 'lat'):
                         if round(time.time() - self.update_time, 0) >= config['position_update_interval']:
                             self.update_time = time.time()
                             self.cb_coordinates(report)
-                        valid = True
+                       # valid = True
 
                 # GPS does not want to talk with us, often happens on boot - will restart myself (the daemon) and be back in a minute...
                 if (time.time() - self.update_time) > (config['position_update_interval']*3):
