@@ -170,6 +170,7 @@ class EasyCabListener():
                 phone = json.load(urllib2.urlopen(url))
                 if len(phone) > 0:
                     self.phone_mac_addr = mac_addr
+                    self.ledbutton_handler.set_led_blink(ledbuttons.PHONE_KEY, False)
         except Exception as e:
             print Exception
             z = e
@@ -181,9 +182,12 @@ class EasyCabListener():
         try:
             response = urllib2.urlopen('http://' + SERVER_HOSTNAME)
             self.update_phone_mac_addr()
+            if self.ledbutton_handler.get_led_blink(ledbuttons.NETWORK_KEY):
+                self.ledbutton_handler.set_led_blink(ledbuttons.NETWORK_KEY, False)
             return True
 
         except Exception:
+            self.ledbutton_handler.set_led_blink(ledbuttons.NETWORK_KEY, True)
             return False
 
     def cb_enumerate(self, uid, connected_uid, position, hardware_version, firmware_version, device_identifier, enumeration_type):
@@ -254,16 +258,13 @@ class EasyCabListener():
 
             except KeyError:
                 print KeyError
-                ledbutton_thread.exit()
                 call(['service', 'easycabd', 'restart'])
 
             except KeyboardInterrupt:
-                ledbutton_thread.exit()
                 quit()
 
             except StopIteration:
                 print 'GPSD Stopped ' + str(self.update_time)
-                ledbutton_thread.exit()
                 call(['service', 'easycabd', 'restart'])
 
             except Exception:
