@@ -59,8 +59,8 @@ class LedButtonHandler():
 
     def set_led_blink(self, key, value):
         self.led_list[key].blink = value
-        GPIO.output(self.led_list[key].gpio, not value)
-        print key + 'set to ' + value
+        if not value:
+            self.set_led_on(self.led_list[key].gpio)
 
     def get_led_blink(self, pin):
         return self.led_list[pin].blink
@@ -93,7 +93,7 @@ class LedButtonHandler():
         else:
             self.button_pressed = True
             self.since_button_pressed = time.time()
-            print 'putton pressed'
+#            print 'putton pressed'
 
     def change_tracking(self):
         """Changes tracking"""
@@ -101,8 +101,6 @@ class LedButtonHandler():
         self.is_tracking = not self.is_tracking
         self.since_button_pressed = -1
         GPIO.output(self.gpio_list, self.is_tracking)
-        print 'tracking changed'
-
 
 class LedButtonsListener(threading.Thread):
 
@@ -114,6 +112,7 @@ class LedButtonsListener(threading.Thread):
         """main method"""
         try:
             oldtime = time.time()
+            blink_on = True
             print 'start handler'
             while True:
                 if GPIO.event_detected(BUTTON_GPIO):
@@ -125,11 +124,15 @@ class LedButtonsListener(threading.Thread):
                     if (time.time() - oldtime) > BLINK_INTERVAL:
                         for led in self.handler.led_list.itervalues():
                             if led.blink:
-                                GPIO.output(led.gpio, not GPIO.input(led.gpio))
+                                GPIO.output(led.gpio, blink_on)
                         oldtime = time.time()
+                        blink_on = not blink_on
         except KeyboardInterrupt:
             quit()
         except Exception:
             print 'ledbuttonrunner has a problem'
+            print Exception
+            z = e
+            print z
         finally:
             GPIO.cleanup()
