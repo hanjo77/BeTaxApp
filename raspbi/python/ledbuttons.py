@@ -26,7 +26,7 @@ class Led():
     """Helper class that represents an LED"""
     def __init__(self, gpio_number):
         self.gpio = gpio_number
-        self.blink = True
+        self.blink = False
 
 
 class LedButtonHandler():
@@ -128,7 +128,7 @@ class LedButtonsListener(threading.Thread):
                         oldtime = time.time()
                         blink_on = not blink_on
         except KeyboardInterrupt:
-            quit()
+
         except Exception:
             print 'ledbuttonrunner has a problem'
             print Exception
