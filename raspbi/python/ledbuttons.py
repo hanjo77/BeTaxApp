@@ -14,7 +14,7 @@ TAXI_GPIO = 27 #23
 DRIVER_GPIO = 17 #24
 BUTTON_GPIO = 25
 BLINK_INTERVAL = 0.5
-RESET_INTERVAL = 2
+RESET_INTERVAL = 0.5
 PHONE_KEY = 'phone'
 NETWORK_KEY = 'network'
 GPS_KEY = 'gps'
@@ -35,6 +35,7 @@ class LedButtonHandler():
 
 
     def __init__(self):
+        GPIO.setwarnings(False)
         GPIO.setmode(GPIO.BCM)
         self.setup_pins()
         self.button_pressed = False
@@ -48,13 +49,10 @@ class LedButtonHandler():
 
 #functions for LED
     def setup_pins(self):
-        GPIO.setup(self.gpio_list, GPIO.OUT)
-        GPIO.setup(BUTTON_GPIO, GPIO.IN)
-        GPIO.remove_event_detect(BUTTON_GPIO)
-        GPIO.add_event_detect(BUTTON_GPIO, GPIO.RISING, bouncetime=200)
+        self.setup_led()
+        self.setup_button()
 
     def setup_led(self):
-        GPIO.setwarnings(False)
         GPIO.setup(self.gpio_list, GPIO.OUT)
 
     def set_led_blink(self, key, value):

@@ -57,16 +57,26 @@ class EasyCabListener():
         self.config = {}
         self.client_config = {}
         self.config_time = time.time()
+        self.turn_off_leds()
         self.update_config()
+        # Start LED and button listener
+        ledbutton_thread = ledbuttons.LedButtonsListener(self.ledbutton_handler)
+        ledbutton_thread.daemon = True
+        ledbutton_thread.start()
 
     def restart_daemon(self):
+        self.turn_off_leds()
+        self.config = {}
+        call(['service', 'easycabd', 'restart'])
+
+    def turn_off_leds(self):
         self.ledbutton_handler.set_led_off(ledbuttons.PHONE_KEY) 
         self.ledbutton_handler.set_led_off(ledbuttons.NETWORK_KEY) 
         self.ledbutton_handler.set_led_off(ledbuttons.GPS_KEY) 
         self.ledbutton_handler.set_led_off(ledbuttons.DRIVER_KEY) 
-        self.ledbutton_handler.set_led_off(ledbuttons.TAXI_KEY) 
-        call(['service', 'easycabd', 'restart'])
-
+        self.ledbutton_handler.set_led_off(ledbuttons.TAXI_KEY)
+        self.driver_token = ''
+        self.taxi_token = ''
 
     def date_handler(self, obj):
         """ Handler used to serialize datetime objects """
@@ -140,11 +150,10 @@ class EasyCabListener():
                 if token_type == TOKEN_TYPE_DRIVER and self.driver_token != id:
                     self.driver_token = id
                     self.ledbutton_handler.set_led_on(ledbuttons.DRIVER_KEY)
-                    print token_type+'_TOKEN = '+id
                 elif token_type == TOKEN_TYPE_TAXI and self.taxi_token != id:
                     self.taxi_token = id
                     self.ledbutton_handler.set_led_on(ledbuttons.TAXI_KEY)
-                    print token_type+'_TOKEN = '+id
+                print token_type+'_TOKEN = '+id
             except Exception as e:
                 print 'Error in method cb_state_changed'
                 print url + ' call failed'
@@ -194,7 +203,6 @@ class EasyCabListener():
             print Exception
             z = e
             print z
-            self.ledbutton_handler.set_led_off(ledbuttons.PHONE_KEY) 
             pass
 
     def internet_on(self):
@@ -221,9 +229,8 @@ class EasyCabListener():
         os.chdir('/usr/local/python');
         with open('config.json') as data_file:    
             self.client_config = json.load(data_file)
-        print self.client_config
-        self.update_phone_mac_addr()
         if self.internet_on():    
+            self.update_phone_mac_addr()
             url = ('http://' +
                 self.client_config['mqtt_url'] +
                 self.client_config['python_web_path'] +
@@ -239,11 +246,6 @@ class EasyCabListener():
 
     def run(self):
         """ The main method """
-        # Start LED and button listener
-        ledbutton_thread = ledbuttons.LedButtonsListener(self.ledbutton_handler)
-        ledbutton_thread.daemon = True
-        ledbutton_thread.start()
-
         # Start GPS listener
         self.start_gps()
 
@@ -264,17 +266,16 @@ class EasyCabListener():
 
         while True:
             # Do your magic now - it's the main loop!           
-            try:
-                if not self.internet_on():
-                    print 'offline'
-                    self.client = []
-                    time.sleep(5)
-                else:
-                    if (self.config == {}):
-                        self.update_config()
-                # Read GPS report and send it if we found a 'lat' key
-                # if self.ledbutton_handler.is_tracking:
-                if True:
+            if self.ledbutton_handler.is_tracking:
+                try:
+                    if not self.internet_on():
+                        print 'offline'
+                        self.client = []
+                        time.sleep(5)
+                    else:
+                        if (self.config == {}):
+                            self.update_config()
+                    # Read GPS report and send it if we found a 'lat' key
                     report = self.session.next()
                     valid = False;
 
@@ -286,29 +287,31 @@ class EasyCabListener():
                                 self.cb_coordinates(report)
                             valid = True
 
-                # GPS does not want to talk with us, often happens on boot - will restart myself (the daemon) and be back in a minute...
-                if (time.time() - self.update_time) > (self.config['position_update_interval']*3):
-                    self.update_time = time.time()
-                    print 'Restart GPSD'
-                    self.ledbutton_handler.set_led_off(ledbuttons.GPS_KEY) 
-                    call(['/root/restart-gpsd.sh'])
+                    # GPS does not want to talk with us, often happens on boot - will restart myself (the daemon) and be back in a minute...
+                    if (time.time() - self.update_time) > (self.config['position_update_interval']*3):
+                        self.update_time = time.time()
+                        print 'Restart GPSD'
+                        self.ledbutton_handler.set_led_off(ledbuttons.GPS_KEY) 
+                        call(['/root/restart-gpsd.sh'])
 
-            except KeyError:
-                print KeyError
-                self.restart_daemon()
+                except KeyError:
+                    print KeyError
+                    self.restart_daemon()
 
-            except KeyboardInterrupt:
-                quit()
+                except KeyboardInterrupt:
+                    quit()
 
-            except StopIteration:
-                print 'GPSD Stopped ' + str(self.update_time)
-                self.restart_daemon()
+                except StopIteration:
+                    print 'GPSD Stopped ' + str(self.update_time)
+                    self.restart_daemon()
 
-            except Exception as e:
-                print 'Error in method start_gps'
-                print Exception
-                z = e
-                print z
+                except Exception as e:
+                    print 'Error in method start_gps'
+                    print Exception
+                    z = e
+                    print z
+            else:
+                self.turn_off_leds()
 
     def pad(self, data):
         """ Adds padding characters for encryption """
