@@ -11,19 +11,12 @@
 # import libs
 import time
 import os
-# import socket
 import paho.mqtt.client as mqtt
 import gps
 import urllib2
-# import dbus
 import json
-# import httplib
 import ledbuttons
-# import functools
 import os.path
-# import pyudev
-# import subprocess
-# import usb
 from lockfile import LockTimeout
 from tinkerforge.ip_connection import IPConnection
 from tinkerforge.bricklet_nfc_rfid import NFCRFID
@@ -31,6 +24,9 @@ from daemon import runner
 from subprocess import call
 from datetime import datetime
 from uuid import getnode as get_mac
+from Crypto import Random
+from Crypto.Cipher import AES
+import base64
 
 # Configuration constants
 NFC_BRICKLET_ID = 246
@@ -90,7 +86,7 @@ class EasyCabListener():
                     'longitude': str(data.lon)
                 }
             }, default=self.date_handler)
-            self.mqtt_publish('presence', json_data)
+            self.mqtt_publish('presence', self.encrypt(json_data))
 
     def update_session_id(self, taxi_token, driver_token, phone_mac_addr):
         """ Gets session ID from HTTP request """
@@ -314,6 +310,27 @@ class EasyCabListener():
                 z = e
                 print z
 
+    def pad(self, data):
+        """ Adds padding characters for encryption """
+        length = 16 - (len(data) % 16)
+        return data + chr(length)*length
+
+    def unpad(self, data):
+        """ Removes added padding characters for decryption """
+        return data[:-ord(data[-1])]
+
+    def encrypt(self, message):
+        """ AES encrypts a string """
+        IV = Random.new().read(16)
+        aes = AES.new(self.config['encryption_key'], AES.MODE_CFB, IV, segment_size=128)
+        return base64.b64encode(IV + aes.encrypt(self.pad(message)))
+
+    def decrypt(self, encrypted):
+        """ Decrypts an AES encrypted string """
+        encrypted = base64.b64decode(encrypted)
+        IV = encrypted[:16]
+        aes = AES.new(self.config['encryption_key'], AES.MODE_CFB, IV, segment_size=128)
+        return self.unpad(aes.decrypt(encrypted[16:]))
 
 easyCabListener = EasyCabListener()
 daemon_runner = runner.DaemonRunner(easyCabListener)
