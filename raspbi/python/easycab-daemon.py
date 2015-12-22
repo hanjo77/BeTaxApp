@@ -63,6 +63,9 @@ class EasyCabListener():
         self.config_time = time.time()
         self.update_config()
 
+    def restart_daemon(self):
+        call(['service', 'easycabd', 'restart'])
+
 
     def date_handler(self, obj):
         """ Handler used to serialize datetime objects """
@@ -102,7 +105,6 @@ class EasyCabListener():
                 if self.session_id != session_id:
                     self.session_id = session_id
                     self.config_time = time.time()
-                    self.update_config()
                     print 'SESSION_ID = '+str(session_id)
             except Exception as e:
                 if taxi_token != '':
@@ -143,7 +145,7 @@ class EasyCabListener():
                     self.ledbutton_handler.set_led_on(ledbuttons.TAXI_KEY)
                     print token_type+'_TOKEN = '+id
             except Exception as e:
-                print 'Error in method cd_state_changed'
+                print 'Error in method cb_state_changed'
                 print url + ' call failed'
                 z = e
                 print z
@@ -154,6 +156,8 @@ class EasyCabListener():
             self.client = mqtt.Client()
             self.client.connect(self.client_config['mqtt_url'], self.client_config['mqtt_port'], keepalive=100)
         self.client.publish(topic, message, qos=0, retain=True)
+        self.update_time = time.time()
+        self.config_time = time.time()
         print message + ' published to ' + topic
 
     def start_gps(self):
@@ -164,7 +168,7 @@ class EasyCabListener():
             pass
         except Exception:
             print 'Error in method start_gps'
-            call(['service', 'easycabd', 'restart'])
+            self.restart_daemon()
             pass
 
     def update_phone_mac_addr(self):
@@ -182,18 +186,21 @@ class EasyCabListener():
                 if len(phone) > 0:
                     self.phone_mac_addr = mac_addr
                     self.ledbutton_handler.set_led_on(ledbuttons.PHONE_KEY)
+                else:
+                    self.ledbutton_handler.set_led_off(ledbuttons.PHONE_KEY) 
         except Exception as e:
             print 'Error in method update_phone_mac_addr'
             print Exception
             z = e
             print z
+            self.ledbutton_handler.set_led_off(ledbuttons.PHONE_KEY) 
             pass
 
     def internet_on(self):
-        """ Checks internet connection - returns true when connected, false when offline """
+        """ Checks internet connection - returns true if connected, false if offline """
         try:
-            response = urllib2.urlopen('http://' + self.client_config['mqtt_url'])
-            #self.update_phone_mac_addr()
+            response = urllib2.urlopen('http://www.google.com')
+            self.ledbutton_handler.set_led_on(ledbuttons.NETWORK_KEY)
             return True
 
         except Exception as e:
@@ -201,6 +208,7 @@ class EasyCabListener():
             print Exception
             z = e
             print z
+            self.ledbutton_handler.set_led_off(ledbuttons.NETWORK_KEY)
             return False
 
     def cb_enumerate(self, uid, connected_uid, position, hardware_version, firmware_version, device_identifier, enumeration_type):
@@ -214,18 +222,19 @@ class EasyCabListener():
             self.client_config = json.load(data_file)
         print self.client_config
         self.update_phone_mac_addr()
-        url = ('http://' +
-            self.client_config['mqtt_url'] +
-            self.client_config['python_web_path'] +
-            '/app_config/'
-            );
-        try:
-            self.config = json.load(urllib2.urlopen(url))
-        except Exception as e:
-            print 'Error in method update_config'
-            print url + ' call failed'
-            z = e
-            print z
+        if self.internet_on():    
+            url = ('http://' +
+                self.client_config['mqtt_url'] +
+                self.client_config['python_web_path'] +
+                '/app_config/'
+                );
+            try:
+                self.config = json.load(urllib2.urlopen(url))
+            except Exception as e:
+                print 'Error in method update_config'
+                print url + ' call failed'
+                z = e
+                print z
 
     def run(self):
         """ The main method """
@@ -252,30 +261,19 @@ class EasyCabListener():
         nfc.register_callback(nfc.CALLBACK_STATE_CHANGED, lambda x, y: self.cb_state_changed(x, y, nfc))
         nfc.request_tag_id(nfc.TAG_TYPE_MIFARE_CLASSIC)
 
-        url = ('http://' +
-                self.client_config['mqtt_url'] + 
-                self.client_config['python_web_path'] +
-                '/app_config/'
-                );
-        try:
-            self.config = json.load(urllib2.urlopen(url))
-        except Exception as e:
-            print 'Error in first update_config'
-            print url + ' call failed'
-            z = e
-            print z
         while True:
             # Do your magic now - it's the main loop!           
             try:
                 if not self.internet_on():
                     print 'offline'
                     self.client = []
-                    self.ledbutton_handler.set_led_off(ledbuttons.NETWORK_KEY)
                     time.sleep(5)
                 else:
-                    self.ledbutton_handler.set_led_on(ledbuttons.NETWORK_KEY)
+                    if (self.config == {}):
+                        self.update_config()
                 # Read GPS report and send it if we found a 'lat' key
-                if self.ledbutton_handler.is_tracking:
+                # if self.ledbutton_handler.is_tracking:
+                if True:
                     report = self.session.next()
                     valid = False;
 
@@ -286,23 +284,25 @@ class EasyCabListener():
                                 self.update_time = time.time()
                                 self.cb_coordinates(report)
                             valid = True
+                    else:
+                        self.ledbutton_handler.set_led_off(ledbuttons.GPS_KEY)
 
                 # GPS does not want to talk with us, often happens on boot - will restart myself (the daemon) and be back in a minute...
                 if (time.time() - self.update_time) > (self.config['position_update_interval']*3):
                     self.update_time = time.time()
-                    call(['service', 'easycabd', 'restart'])
                     print 'Restart GPSD'
+                    self.restart_daemon()
 
             except KeyError:
                 print KeyError
-                call(['service', 'easycabd', 'restart'])
+                self.restart_daemon()
 
             except KeyboardInterrupt:
                 quit()
 
             except StopIteration:
                 print 'GPSD Stopped ' + str(self.update_time)
-                call(['service', 'easycabd', 'restart'])
+                self.restart_daemon()
 
             except Exception as e:
                 print 'Error in method start_gps'
