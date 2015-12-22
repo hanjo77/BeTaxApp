@@ -64,6 +64,11 @@ class EasyCabListener():
         self.update_config()
 
     def restart_daemon(self):
+        self.ledbutton_handler.set_led_off(ledbuttons.PHONE_KEY) 
+        self.ledbutton_handler.set_led_off(ledbuttons.NETWORK_KEY) 
+        self.ledbutton_handler.set_led_off(ledbuttons.GPS_KEY) 
+        self.ledbutton_handler.set_led_off(ledbuttons.DRIVER_KEY) 
+        self.ledbutton_handler.set_led_off(ledbuttons.TAXI_KEY) 
         call(['service', 'easycabd', 'restart'])
 
 
@@ -284,14 +289,13 @@ class EasyCabListener():
                                 self.update_time = time.time()
                                 self.cb_coordinates(report)
                             valid = True
-                    else:
-                        self.ledbutton_handler.set_led_off(ledbuttons.GPS_KEY)
 
                 # GPS does not want to talk with us, often happens on boot - will restart myself (the daemon) and be back in a minute...
                 if (time.time() - self.update_time) > (self.config['position_update_interval']*3):
                     self.update_time = time.time()
                     print 'Restart GPSD'
-                    self.restart_daemon()
+                    self.ledbutton_handler.set_led_off(ledbuttons.GPS_KEY) 
+                    call(['/root/restart-gpsd.sh'])
 
             except KeyError:
                 print KeyError
