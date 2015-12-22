@@ -11,19 +11,19 @@
 # import libs
 import time
 import os
-import socket
+# import socket
 import paho.mqtt.client as mqtt
 import gps
 import urllib2
-import dbus
+# import dbus
 import json
-import httplib
+# import httplib
 import ledbuttons
-import functools
+# import functools
 import os.path
-import pyudev
-import subprocess
-import usb
+# import pyudev
+# import subprocess
+# import usb
 from lockfile import LockTimeout
 from tinkerforge.ip_connection import IPConnection
 from tinkerforge.bricklet_nfc_rfid import NFCRFID
@@ -270,19 +270,18 @@ class EasyCabListener():
                 if not self.internet_on():
                     print 'offline'
                     self.client = []
-                    self.ledbutton_handler.set_led_on(ledbuttons.NETWORK_KEY)
+                    self.ledbutton_handler.set_led_off(ledbuttons.NETWORK_KEY)
                     time.sleep(5)
                 else:
-                    self.ledbutton_handler.set_led_off(ledbuttons.NETWORK_KEY)
+                    self.ledbutton_handler.set_led_on(ledbuttons.NETWORK_KEY)
                 # Read GPS report and send it if we found a 'lat' key
                 if self.ledbutton_handler.is_tracking:
                     report = self.session.next()
                     valid = False;
 
                     if report:
-                        # if self.ledbutton_handler.get_led_blink(ledbuttons.GPS_KEY):
                         if hasattr(report, 'lat'):
-                            self.ledbutton_handler.set_led_blink(ledbuttons.GPS_KEY, False)
+                            self.ledbutton_handler.set_led_on(ledbuttons.GPS_KEY)
                             if round(time.time() - self.update_time, 0) >= self.config['position_update_interval']:
                                 self.update_time = time.time()
                                 self.cb_coordinates(report)

@@ -7,11 +7,11 @@ import time
 import threading
 
 #Constants
-PHONE_GPIO = 17
-NETWORK_GPIO = 27
+PHONE_GPIO = 24 #17
+NETWORK_GPIO = 23 #27
 GPS_GPIO = 22
-TAXI_GPIO = 23
-DRIVER_GPIO = 24
+TAXI_GPIO = 27 #23
+DRIVER_GPIO = 17 #24
 BUTTON_GPIO = 25
 BLINK_INTERVAL = 0.5
 RESET_INTERVAL = 2
@@ -26,7 +26,7 @@ class Led():
     """Helper class that represents an LED"""
     def __init__(self, gpio_number):
         self.gpio = gpio_number
-        self.blink = True
+        self.blink = False
 
 
 class LedButtonHandler():
@@ -65,7 +65,7 @@ class LedButtonHandler():
     def get_led_blink(self, pin):
         return self.led_list[pin].blink
 
-    def set_led_on(self,pin):
+    def set_led_on(self, pin):
         GPIO.output(self.led_list[pin].gpio, GPIO.HIGH)
 
     def set_led_off(self, pin):
