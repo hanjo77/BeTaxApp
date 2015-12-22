@@ -19,6 +19,11 @@ import dbus
 import json
 import httplib
 import ledbuttons
+import functools
+import os.path
+import pyudev
+import subprocess
+import usb
 from lockfile import LockTimeout
 from tinkerforge.ip_connection import IPConnection
 from tinkerforge.bricklet_nfc_rfid import NFCRFID
@@ -28,15 +33,10 @@ from datetime import datetime
 from uuid import getnode as get_mac
 
 # Configuration constants
-config = {}
-
-SERVER_HOSTNAME = '46.101.17.239'
-MQTT_PORT = 1883
 NFC_BRICKLET_ID = 246
 NFC_TAG_TYPE = 0
 TOKEN_TYPE_DRIVER = 'DRIVER'
 TOKEN_TYPE_TAXI = 'TAXI'
-CONFIG_UPDATE_INTERVAL = 60
 
 
 class EasyCabListener():
@@ -44,8 +44,8 @@ class EasyCabListener():
     def __init__(self):
         """ Initializes daemon """
         self.stdin_path = '/dev/null'
-        self.stdout_path = '/var/log/easycabd/easycabd.log'
-        self.stderr_path = '/var/log/easycabd/easycabd-error.log'
+        self.stdout_path = '/var/log/easycabd/' + datetime.now().strftime('easycabd_%Y-%m-%d-%H-%M.log')
+        self.stderr_path = '/var/log/easycabd/' + datetime.now().strftime('easycabd-error_%Y-%m-%d-%H-%M.log')
         self.pidfile_path =  '/var/run/easycabd/easycabd.pid'
         self.pidfile_timeout = 5
         self.update_time = time.time();
@@ -58,8 +58,10 @@ class EasyCabListener():
         self.phone_mac_addr = ''
         self.session_id = 0
         self.ledbutton_handler = ledbuttons.LedButtonHandler()
-        self.config_time = time.time()
         self.config = {}
+        self.client_config = {}
+        self.config_time = time.time()
+        self.update_config()
 
 
     def date_handler(self, obj):
@@ -68,7 +70,7 @@ class EasyCabListener():
 
     def cb_coordinates(self, data):
         """ Callback function for coordinates """
-        #session_id = self.get_session_id(self.taxi_token, self.driver_token, self.phone_mac_addr)
+        self.update_session_id(self.taxi_token, self.driver_token, self.phone_mac_addr)
 
         if (self.taxi_token != '' and
             self.session_id > 0):
@@ -82,29 +84,32 @@ class EasyCabListener():
             }, default=self.date_handler)
             self.mqtt_publish('presence', json_data)
 
-    def get_session_id(self, taxi_token, driver_token, phone_mac_addr):
+    def update_session_id(self, taxi_token, driver_token, phone_mac_addr):
         """ Gets session ID from HTTP request """
-        session_id = 0
-        url = ('http://' + 
-            SERVER_HOSTNAME + 
-            '/data/session/' + 
-            phone_mac_addr + '/' +
-            taxi_token + '/' + 
-            driver_token + '/'
-            )
-        try:
-            session = json.load(urllib2.urlopen(url))
-            session_id = session['session_id']
-            if self.session_id != session_id:
-                self.session_id = session_id
-                print 'SESSION_ID = '+str(session_id)
-        except Exception as e:
-            if taxi_token != '':
-                print (url + ' call failed')
-                z = e
-                print z
-            pass
-        return session_id
+        if (time.time() - self.config_time) >= self.config['session_timeout']:
+            session_id = 0
+            url = ('http://' + 
+                self.client_config['mqtt_url'] + 
+                self.client_config['python_web_path'] +
+                '/session/' + 
+                phone_mac_addr + '/' +
+                taxi_token + '/' + 
+                driver_token + '/'
+                )
+            try:
+                session = json.load(urllib2.urlopen(url))
+                session_id = session['session_id']
+                if self.session_id != session_id:
+                    self.session_id = session_id
+                    self.config_time = time.time()
+                    self.update_config()
+                    print 'SESSION_ID = '+str(session_id)
+            except Exception as e:
+                if taxi_token != '':
+                    print (url + ' call failed')
+                    z = e
+                    print z
+                pass
 
     def cb_state_changed(self, state, idle, nfc):
         """ Callback function for RFID reader state changed callback """
@@ -121,8 +126,9 @@ class EasyCabListener():
             id = (':'.join(d))
             # Set environment variable DRIVER_TOKEN to NFC tag ID
             url = ('http://' + 
-                SERVER_HOSTNAME + 
-                '/data/validate_token/' + 
+                self.client_config['mqtt_url'] + 
+                self.client_config['python_web_path'] +
+                '/validate_token/' + 
                 id + '/'
                 );
             try:
@@ -146,7 +152,7 @@ class EasyCabListener():
         """ Wrapper to publish messages over MQTT """
         if not hasattr(self.client, 'publish'):
             self.client = mqtt.Client()
-            self.client.connect(SERVER_HOSTNAME, MQTT_PORT, keepalive=100)
+            self.client.connect(self.client_config['mqtt_url'], self.client_config['mqtt_port'], keepalive=100)
         self.client.publish(topic, message, qos=0, retain=True)
         print message + ' published to ' + topic
 
@@ -157,7 +163,7 @@ class EasyCabListener():
             self.session.stream(gps.WATCH_ENABLE | gps.WATCH_NEWSTYLE)
             pass
         except Exception:
-            print 'Error in method start'
+            print 'Error in method start_gps'
             call(['service', 'easycabd', 'restart'])
             pass
 
@@ -167,8 +173,9 @@ class EasyCabListener():
             mac_addr = ':'.join(("%012X" % get_mac())[i:i+2] for i in range(0, 12, 2))
             if (self.phone_mac_addr != mac_addr):
                 url = ('http://' + 
-                    SERVER_HOSTNAME + 
-                    '/data/validate_phone/' + 
+                    self.client_config['mqtt_url'] + 
+                    self.client_config['python_web_path'] +
+                    '/validate_phone/' + 
                     mac_addr + '/'
                     );
                 phone = json.load(urllib2.urlopen(url))
@@ -185,7 +192,7 @@ class EasyCabListener():
     def internet_on(self):
         """ Checks internet connection - returns true when connected, false when offline """
         try:
-            response = urllib2.urlopen('http://' + SERVER_HOSTNAME)
+            response = urllib2.urlopen('http://' + self.client_config['mqtt_url'])
             #self.update_phone_mac_addr()
             return True
 
@@ -202,13 +209,16 @@ class EasyCabListener():
             self.nfc_uid = uid
 
     def update_config(self):
-        self.get_session_id(self.taxi_token, self.driver_token, self.phone_mac_addr)
-        self.config_time = time.time()
+        os.chdir('/usr/local/python');
+        with open('config.json') as data_file:    
+            self.client_config = json.load(data_file)
+        print self.client_config
         self.update_phone_mac_addr()
         url = ('http://' +
-                SERVER_HOSTNAME +
-                '/data/app_config/'
-                );
+            self.client_config['mqtt_url'] +
+            self.client_config['python_web_path'] +
+            '/app_config/'
+            );
         try:
             self.config = json.load(urllib2.urlopen(url))
         except Exception as e:
@@ -242,10 +252,10 @@ class EasyCabListener():
         nfc.register_callback(nfc.CALLBACK_STATE_CHANGED, lambda x, y: self.cb_state_changed(x, y, nfc))
         nfc.request_tag_id(nfc.TAG_TYPE_MIFARE_CLASSIC)
 
-        self.config_time = time.time()
         url = ('http://' +
-                SERVER_HOSTNAME +
-                '/data/app_config/'
+                self.client_config['mqtt_url'] + 
+                self.client_config['python_web_path'] +
+                '/app_config/'
                 );
         try:
             self.config = json.load(urllib2.urlopen(url))
@@ -266,8 +276,6 @@ class EasyCabListener():
                 else:
                     if self.ledbutton_handler.get_led_blink(ledbuttons.NETWORK_KEY):
                          self.ledbutton_handler.set_led_blink(ledbuttons.NETWORK_KEY, False)
-                if (time.time() - self.config_time) >= CONFIG_UPDATE_INTERVAL:
-                    self.update_config()
                 # Read GPS report and send it if we found a 'lat' key
                 if self.ledbutton_handler.is_tracking:
                     report = self.session.next()
@@ -299,8 +307,11 @@ class EasyCabListener():
                 print 'GPSD Stopped ' + str(self.update_time)
                 call(['service', 'easycabd', 'restart'])
 
-            except Exception:
+            except Exception as e:
+                print 'Error in method start_gps'
                 print Exception
+                z = e
+                print z
 
 
 easyCabListener = EasyCabListener()
