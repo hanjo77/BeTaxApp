@@ -136,11 +136,11 @@ class EasyCabListener():
                 token_type = token['type'].upper()
                 if token_type == TOKEN_TYPE_DRIVER and self.driver_token != id:
                     self.driver_token = id
-                    self.ledbutton_handler.set_led_blink(ledbuttons.DRIVER_KEY, False)
+                    self.ledbutton_handler.set_led_on(ledbuttons.DRIVER_KEY)
                     print token_type+'_TOKEN = '+id
                 elif token_type == TOKEN_TYPE_TAXI and self.taxi_token != id:
                     self.taxi_token = id
-                    self.ledbutton_handler.set_led_blink(ledbuttons.TAXI_KEY, False)
+                    self.ledbutton_handler.set_led_on(ledbuttons.TAXI_KEY)
                     print token_type+'_TOKEN = '+id
             except Exception as e:
                 print 'Error in method cd_state_changed'
@@ -181,7 +181,7 @@ class EasyCabListener():
                 phone = json.load(urllib2.urlopen(url))
                 if len(phone) > 0:
                     self.phone_mac_addr = mac_addr
-                    self.ledbutton_handler.set_led_blink(ledbuttons.PHONE_KEY, False)
+                    self.ledbutton_handler.set_led_on(ledbuttons.PHONE_KEY)
         except Exception as e:
             print 'Error in method update_phone_mac_addr'
             print Exception
@@ -270,12 +270,10 @@ class EasyCabListener():
                 if not self.internet_on():
                     print 'offline'
                     self.client = []
-                    if not self.ledbutton_handler.get_led_blink(ledbuttons.NETWORK_KEY):
-                        self.ledbutton_handler.set_led_blink(ledbuttons.NETWORK_KEY, True)
+                    self.ledbutton_handler.set_led_on(ledbuttons.NETWORK_KEY)
                     time.sleep(5)
                 else:
-                    if self.ledbutton_handler.get_led_blink(ledbuttons.NETWORK_KEY):
-                         self.ledbutton_handler.set_led_blink(ledbuttons.NETWORK_KEY, False)
+                    self.ledbutton_handler.set_led_off(ledbuttons.NETWORK_KEY)
                 # Read GPS report and send it if we found a 'lat' key
                 if self.ledbutton_handler.is_tracking:
                     report = self.session.next()
