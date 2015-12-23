@@ -1,0 +1,46 @@
+#! /bin/bash
+# Copyright (c) 1996-2012 My Company.
+# All rights reserved.
+#
+# Author: Stephan Menzi & Hansjuerg Jaggi
+#
+# /etc/init.d/flashconfigd
+#
+### BEGIN INIT INFO
+# Provides: flashconfigd
+# Required-Start: 
+# Should-Start: 
+# Required-Stop: 
+# Should-Stop:
+# Default-Start:  2 3 4 5
+# Default-Stop:   0 1 6
+# Short-Description: FlashConfig Daemon
+# Description:    Updates configuration when a matching file is found on a connected USB flash drive
+### END INIT INFO
+
+case "$1" in
+  start)
+    echo "Starting server"
+    # Start the daemon
+    mkdir /var/run/flashconfigd
+    python /usr/local/python/flashconfig-daemon.py start
+    ;;
+  stop)
+    echo "Stopping server"
+    # Stop the daemon
+    python /usr/local/python/flashconfig-daemon.py stop
+    rm -r /var/run/flashconfigd
+    ;;
+  restart)
+    echo "Restarting server"
+    python /usr/local/python/flashconfig-daemon.py stop
+    python /usr/local/python/flashconfig-daemon.py start
+    ;;
+  *)
+    # Refuse to do other stuff
+    echo "Usage: /etc/init.d/flashconfigd {start|stop|restart}"
+    exit 1
+    ;;
+esac
+
+exit 0
