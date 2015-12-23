@@ -74,6 +74,9 @@ class LedButtonHandler():
         GPIO.remove_event_detect(BUTTON_GPIO)
         GPIO.add_event_detect(BUTTON_GPIO, GPIO.RISING, bouncetime=200)
 
+    def set_all_led_off(self):
+        GPIO.output(self.gpio_list, GPIO.LOW)
+
     def on_restart_handler(self):
         GPIO.output(self.gpio_list, GPIO.LOW)
         GPIO.cleanup()
@@ -137,5 +140,5 @@ class LedButtonsListener(threading.Thread):
             z = e
             print z
         finally:
-            GPIO.cleanup()
+            self.handler.on_restart_handler()
             quit()
