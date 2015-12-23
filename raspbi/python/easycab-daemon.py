@@ -70,11 +70,7 @@ class EasyCabListener():
         call(['service', 'easycabd', 'restart'])
 
     def turn_off_leds(self):
-        self.ledbutton_handler.set_led_off(ledbuttons.PHONE_KEY) 
-        self.ledbutton_handler.set_led_off(ledbuttons.NETWORK_KEY) 
-        self.ledbutton_handler.set_led_off(ledbuttons.GPS_KEY) 
-        self.ledbutton_handler.set_led_off(ledbuttons.DRIVER_KEY) 
-        self.ledbutton_handler.set_led_off(ledbuttons.TAXI_KEY)
+        self.ledbutton_handler.on_restart_handler() 
         self.driver_token = ''
         self.taxi_token = ''
 

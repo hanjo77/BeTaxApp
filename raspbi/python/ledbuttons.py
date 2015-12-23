@@ -74,6 +74,10 @@ class LedButtonHandler():
         GPIO.remove_event_detect(BUTTON_GPIO)
         GPIO.add_event_detect(BUTTON_GPIO, GPIO.RISING, bouncetime=200)
 
+    def on_restart_handler(self):
+        GPIO.output(self.gpio_list, GPIO.LOW)
+        GPIO.cleanup()
+
     def is_button_pressed(self):
         """Checks if button is clicked and if it was a doubleclick"""
         if self.button_pressed:
