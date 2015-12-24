@@ -1,0 +1,47 @@
+#! /bin/bash
+# Copyright (c) 1996-2012 My Company.
+# All rights reserved.
+#
+# Author: Stephan Menzi & Hansjuerg Jaggi
+#
+# /etc/init.d/buttond
+#
+### BEGIN INIT INFO
+# Provides: buttond
+# Required-Start: 
+# Should-Start: 
+# Required-Stop: 
+# Should-Stop:
+# Default-Start:  2 3 4 5
+# Default-Stop:   0 1 6
+# Short-Description: Button Daemon
+# Description:    Listens to button presses
+### END INIT INFO
+
+case "$1" in
+  start)
+    echo "Starting server"
+    # Start the daemon
+    rm /usr/local/python/block
+    mkdir /var/run/buttond
+    python /usr/local/python/button-daemon.py start
+    ;;
+  stop)
+    echo "Stopping server"
+    # Stop the daemon
+    python /usr/local/python/button-daemon.py stop
+    rm -r /var/run/buttond
+    ;;
+  restart)
+    echo "Restarting server"
+    python /usr/local/python/button-daemon.py stop
+    python /usr/local/python/button-daemon.py start
+    ;;
+  *)
+    # Refuse to do other stuff
+    echo "Usage: /etc/init.d/buttond {start|stop|restart}"
+    exit 1
+    ;;
+esac
+
+exit 0

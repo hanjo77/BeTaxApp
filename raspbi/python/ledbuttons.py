@@ -37,7 +37,7 @@ class LedButtonHandler():
     def __init__(self):
         GPIO.setwarnings(False)
         GPIO.setmode(GPIO.BCM)
-        self.setup_pins()
+        self.setup_led()
         self.button_pressed = False
         self.since_button_pressed = -1
         self.is_tracking = True
@@ -48,10 +48,6 @@ class LedButtonHandler():
                 DRIVER_KEY: Led(DRIVER_GPIO)}
 
 #functions for LED
-    def setup_pins(self):
-        self.setup_led()
-        self.setup_button()
-
     def setup_led(self):
         GPIO.setup(self.gpio_list, GPIO.OUT)
 
@@ -68,11 +64,6 @@ class LedButtonHandler():
 
     def set_led_off(self, pin):
         GPIO.output(self.led_list[pin].gpio, GPIO.LOW)
-
-    def setup_button(self):
-        GPIO.setup(BUTTON_GPIO, GPIO.IN)
-        GPIO.remove_event_detect(BUTTON_GPIO)
-        GPIO.add_event_detect(BUTTON_GPIO, GPIO.RISING, bouncetime=200)
 
     def set_all_led_off(self):
         GPIO.output(self.gpio_list, GPIO.LOW)
@@ -106,39 +97,3 @@ class LedButtonHandler():
         self.is_tracking = not self.is_tracking
         self.since_button_pressed = -1
         GPIO.output(self.gpio_list, self.is_tracking)
-
-class LedButtonsListener(threading.Thread):
-
-    def __init__(self, handler):
-        threading.Thread.__init__(self)
-        self.handler = handler
-
-    def run(self):
-        """main method"""
-        try:
-            oldtime = time.time()
-            blink_on = True
-            print 'start handler'
-            while True:
-                if GPIO.event_detected(BUTTON_GPIO):
-                    self.handler.is_button_pressed()
-                if (self.handler.since_button_pressed > 0 and
-                    time.time() - self.handler.since_button_pressed > RESET_INTERVAL):
-                    self.handler.change_tracking()
-                if self.handler.is_tracking:
-                    if (time.time() - oldtime) > BLINK_INTERVAL:
-                        for led in self.handler.led_list.itervalues():
-                            if led.blink:
-                                GPIO.output(led.gpio, blink_on)
-                        oldtime = time.time()
-                        blink_on = not blink_on
-        except KeyboardInterrupt:
-            pass
-        except Exception:
-            print 'ledbuttonrunner has a problem'
-            print Exception
-            z = e
-            print z
-        finally:
-            self.handler.on_restart_handler()
-            quit()

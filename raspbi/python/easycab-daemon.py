@@ -17,6 +17,7 @@ import urllib2
 import json
 import ledbuttons
 import os.path
+import signal
 from lockfile import LockTimeout
 from tinkerforge.ip_connection import IPConnection
 from tinkerforge.bricklet_nfc_rfid import NFCRFID
@@ -59,10 +60,6 @@ class EasyCabListener():
         self.config_time = time.time()
         self.turn_off_leds()
         self.update_config()
-        # Start LED and button listener
-        ledbutton_thread = ledbuttons.LedButtonsListener(self.ledbutton_handler)
-        ledbutton_thread.daemon = True
-        ledbutton_thread.start()
 
     def restart_daemon(self):
         self.turn_off_leds()
@@ -242,6 +239,12 @@ class EasyCabListener():
 
     def run(self):
         """ The main method """
+        def exit_handler(signum, frame):
+            print "exiting..."
+            self.turn_off_leds()
+            quit()
+
+        signal.signal(signal.SIGTERM, exit_handler)
         # Start GPS listener
         self.start_gps()
 
@@ -261,8 +264,8 @@ class EasyCabListener():
         nfc.request_tag_id(nfc.TAG_TYPE_MIFARE_CLASSIC)
 
         while True:
-            # Do your magic now - it's the main loop!           
-            if self.ledbutton_handler.is_tracking:
+            # Do your magic now - it's the main loop!  
+            if not os.path.exists('/usr/local/python/block'):
                 try:
                     if not self.internet_on():
                         print 'offline'
