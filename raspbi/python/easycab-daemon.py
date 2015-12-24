@@ -70,6 +70,8 @@ class EasyCabListener():
         self.ledbutton_handler.set_all_led_off()
         self.driver_token = ''
         self.taxi_token = ''
+        self.phone_mac_addr = ''
+        self.session_id = 0
 
     def date_handler(self, obj):
         """ Handler used to serialize datetime objects """
@@ -239,12 +241,6 @@ class EasyCabListener():
 
     def run(self):
         """ The main method """
-        def exit_handler(signum, frame):
-            print "exiting..."
-            self.turn_off_leds()
-            quit()
-
-        signal.signal(signal.SIGTERM, exit_handler)
         # Start GPS listener
         self.start_gps()
 
