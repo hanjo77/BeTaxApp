@@ -24,7 +24,7 @@ class ButtonListener():
         self.pidfile_timeout = 5
         self.oldtime = time.time()
         GPIO.setmode(GPIO.BCM)
-        GPIO.setup(ledbuttons.BUTTON_GPIO, GPIO.IN)
+        GPIO.setup(ledbuttons.BUTTON_GPIO, GPIO.IN, pull_up_down=GPIO.PUD_UP)
         GPIO.remove_event_detect(ledbuttons.BUTTON_GPIO)
         GPIO.add_event_detect(ledbuttons.BUTTON_GPIO, GPIO.RISING, bouncetime=900, callback=self.cb_button)
         while True:
@@ -35,14 +35,13 @@ class ButtonListener():
             if (time.time()-self.oldtime) > CLICK_TIMEOUT:          
                 print 'pressed'           
                 self.oldtime = time.time()
-                if os.path.exists("/var/run/easycabd"):
-                    call(['service', 'easycabd', 'stop'])
+                if not os.path.exists("/usr/local/python/block"):
                     new_name = os.path.join('/usr/local/python/', 'block')         
                     new_file = open(new_name, "w")
                     new_file.write('')
                     new_file.close()
                 else:
-                    call(['service', 'easycabd', 'start'])
+                    call(['service', 'easycabd', 'restart'])
                     call(['rm', '/usr/local/python/block'])
 
 buttonListener = ButtonListener()

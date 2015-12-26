@@ -270,6 +270,8 @@ class EasyCabListener():
                     else:
                         if (self.config == {}):
                             self.update_config()
+                    if self.phone_mac_addr == '':
+                        self.update_config()
                     # Read GPS report and send it if we found a 'lat' key
                     report = self.session.next()
                     valid = False;
