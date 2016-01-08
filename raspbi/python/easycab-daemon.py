@@ -15,7 +15,7 @@ import paho.mqtt.client as mqtt
 import gps
 import urllib2
 import json
-import ledbuttons
+import ledhandler
 import os.path
 import signal
 from lockfile import LockTimeout
@@ -44,6 +44,7 @@ class EasyCabListener():
         self.stdout_path = '/var/log/easycabd/' + datetime.now().strftime('easycabd_%Y-%m-%d-%H-%M.log')
         self.stderr_path = '/var/log/easycabd/' + datetime.now().strftime('easycabd-error_%Y-%m-%d-%H-%M.log')
         self.pidfile_path =  '/var/run/easycabd/easycabd.pid'
+        self.block_file_path = '/block'
         self.pidfile_timeout = 5
         self.update_time = time.time();
         self.nfc_uid = ''
@@ -54,7 +55,7 @@ class EasyCabListener():
         self.taxi_token = ''
         self.phone_mac_addr = ''
         self.session_id = 0
-        self.ledbutton_handler = ledbuttons.LedButtonHandler()
+        self.led_handler = ledhandler.LedHandler()
         self.config = {}
         self.client_config = {}
         self.config_time = time.time()
@@ -67,7 +68,7 @@ class EasyCabListener():
         call(['service', 'easycabd', 'restart'])
 
     def turn_off_leds(self):
-        self.ledbutton_handler.set_all_led_off()
+        self.led_handler.set_all_led_off()
         self.driver_token = ''
         self.taxi_token = ''
         self.phone_mac_addr = ''
@@ -144,10 +145,10 @@ class EasyCabListener():
                 token_type = token['type'].upper()
                 if token_type == TOKEN_TYPE_DRIVER and self.driver_token != id:
                     self.driver_token = id
-                    self.ledbutton_handler.set_led_on(ledbuttons.DRIVER_KEY)
+                    self.led_handler.set_led_on(ledhandler.DRIVER_KEY)
                 elif token_type == TOKEN_TYPE_TAXI and self.taxi_token != id:
                     self.taxi_token = id
-                    self.ledbutton_handler.set_led_on(ledbuttons.TAXI_KEY)
+                    self.led_handler.set_led_on(ledhandler.TAXI_KEY)
                 print token_type+'_TOKEN = '+id
             except Exception as e:
                 print 'Error in method cb_state_changed'
@@ -190,9 +191,9 @@ class EasyCabListener():
                 phone = json.load(urllib2.urlopen(url))
                 if len(phone) > 0:
                     self.phone_mac_addr = mac_addr
-                    self.ledbutton_handler.set_led_on(ledbuttons.PHONE_KEY)
+                    self.led_handler.set_led_on(ledhandler.PHONE_KEY)
                 else:
-                    self.ledbutton_handler.set_led_off(ledbuttons.PHONE_KEY) 
+                    self.led_handler.set_led_off(ledhandler.PHONE_KEY) 
         except Exception as e:
             print 'Error in method update_phone_mac_addr'
             print Exception
@@ -204,7 +205,7 @@ class EasyCabListener():
         """ Checks internet connection - returns true if connected, false if offline """
         try:
             response = urllib2.urlopen('http://www.google.com')
-            self.ledbutton_handler.set_led_on(ledbuttons.NETWORK_KEY)
+            self.led_handler.set_led_on(ledhandler.NETWORK_KEY)
             return True
 
         except Exception as e:
@@ -212,7 +213,7 @@ class EasyCabListener():
             print Exception
             z = e
             print z
-            self.ledbutton_handler.set_led_off(ledbuttons.NETWORK_KEY)
+            self.led_handler.set_led_off(ledhandler.NETWORK_KEY)
             return False
 
     def cb_enumerate(self, uid, connected_uid, position, hardware_version, firmware_version, device_identifier, enumeration_type):
@@ -259,9 +260,12 @@ class EasyCabListener():
         nfc.register_callback(nfc.CALLBACK_STATE_CHANGED, lambda x, y: self.cb_state_changed(x, y, nfc))
         nfc.request_tag_id(nfc.TAG_TYPE_MIFARE_CLASSIC)
 
+        if os.path.exists(self.block_file_path):
+            call(['rm', self.block_file_path])
+            
         while True:
             # Do your magic now - it's the main loop!  
-            if not os.path.exists('/usr/local/python/block'):
+            if not os.path.exists(self.block_file_path):
                 try:
                     if not self.internet_on():
                         print 'offline'
@@ -278,7 +282,7 @@ class EasyCabListener():
 
                     if report:
                         if hasattr(report, 'lat'):
-                            self.ledbutton_handler.set_led_on(ledbuttons.GPS_KEY)
+                            self.led_handler.set_led_on(ledhandler.GPS_KEY)
                             if round(time.time() - self.update_time, 0) >= self.config['position_update_interval']:
                                 self.update_time = time.time()
                                 self.cb_coordinates(report)
@@ -288,7 +292,7 @@ class EasyCabListener():
                     if (time.time() - self.update_time) > (self.config['position_update_interval']*3):
                         self.update_time = time.time()
                         print 'Restart GPSD'
-                        self.ledbutton_handler.set_led_off(ledbuttons.GPS_KEY) 
+                        self.led_handler.set_led_off(ledhandler.GPS_KEY) 
                         call(['/root/restart-gpsd.sh'])
 
                 except KeyError:

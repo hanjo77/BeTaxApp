@@ -29,7 +29,7 @@ class Led():
         self.blink = False
 
 
-class LedButtonHandler():
+class LedHandler():
     """Handles the button and the leds"""
     gpio_list = [PHONE_GPIO, NETWORK_GPIO, GPS_GPIO, TAXI_GPIO, DRIVER_GPIO]
 
