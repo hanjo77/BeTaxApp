@@ -1,0 +1,44 @@
+#! /bin/bash
+# Copyright (c) 1996-2012 My Company.
+# All rights reserved.
+#
+# Author: Stephan Menzi & Hansjuerg Jaggi
+#
+# /etc/init.d/mosquittod
+#
+### BEGIN INIT INFO
+# Provides: mosquittod
+# Required-Start: 
+# Should-Start: 
+# Required-Stop: 
+# Should-Stop:
+# Default-Start:  2 3 4 5
+# Default-Stop:   0 1 6
+# Short-Description: Mosquitto Daemon
+# Description:    Starts and stops the Mosquitto MQTT broker
+### END INIT INFO
+
+case "$1" in
+  start)
+    echo "Starting server"
+    # Start the daemon
+    /usr/local/sbin/mosquitto -c /etc/mosquitto/mosquitto.conf
+    ;;
+  stop)
+    echo "Stopping server"
+    # Stop the daemon
+    killall mosquittod
+    ;;
+  restart)
+    echo "Restarting server"
+    /etc/init.d/mosquittod stop
+    /etc/init.d/mosquittod start
+    ;;
+  *)
+    # Refuse to do other stuff
+    echo "Usage: /etc/init.d/mosquittod {start|stop|restart}"
+    exit 1
+    ;;
+esac
+
+exit 0

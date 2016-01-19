@@ -41,8 +41,10 @@ class EasyCabListener():
     def __init__(self):
         """ Initializes daemon """
         self.stdin_path = '/dev/null'
-        self.stdout_path = '/var/log/easycabd/' + datetime.now().strftime('easycabd_%Y-%m-%d-%H-%M.log')
-        self.stderr_path = '/var/log/easycabd/' + datetime.now().strftime('easycabd-error_%Y-%m-%d-%H-%M.log')
+        # self.stdout_path = '/var/log/easycabd/' + datetime.now().strftime('easycabd_%Y-%m-%d-%H-%M.log')
+        # self.stderr_path = '/var/log/easycabd/' + datetime.now().strftime('easycabd-error_%Y-%m-%d-%H-%M.log')
+        self.stdout_path = '/var/log/easycabd/easycabd.log'
+        self.stderr_path = '/var/log/easycabd/easycabd-error.log'
         self.pidfile_path =  '/var/run/easycabd/easycabd.pid'
         self.block_file_path = '/block'
         self.pidfile_timeout = 5
